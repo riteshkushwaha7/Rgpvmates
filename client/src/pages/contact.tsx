@@ -1,288 +1,498 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { User, CreditCard, AlertTriangle, Lightbulb, Clock } from "lucide-react";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { 
+  User, 
+  CreditCard, 
+  AlertTriangle, 
+  Lightbulb, 
+  Clock, 
+  Upload, 
+  X,
+  Phone,
+  Mail,
+  ArrowLeft,
+  Image as ImageIcon,
+  Send
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const contactSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Must be a valid email address"),
-  issueType: z.enum(["profile", "payment", "abuse", "suggestion"]),
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
-  priority: z.enum(["low", "medium", "high", "urgent"]),
-});
-
-type ContactForm = z.infer<typeof contactSchema>;
+interface ContactForm {
+  name: string;
+  email: string;
+  phone: string;
+  issueType: string;
+  subject: string;
+  message: string;
+  priority: string;
+}
 
 export default function Contact() {
-  const { toast } = useToast();
-
-  const form = useForm<ContactForm>({
-    resolver: zodResolver(contactSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      issueType: "profile",
-      subject: "",
-      description: "",
-      priority: "medium",
-    },
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  
+  const [formData, setFormData] = useState<ContactForm>({
+    name: '',
+    email: '',
+    phone: '',
+    issueType: 'profile',
+    subject: '',
+    message: '',
+    priority: 'medium'
   });
 
-  const submitContactMutation = useMutation({
-    mutationFn: async (data: ContactForm) => {
-      await apiRequest("POST", "/api/contact", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Support Request Submitted",
-        description: "We've received your request and will respond soon. Check your email for updates.",
-      });
-      form.reset();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to submit your request. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  const onSubmit = (data: ContactForm) => {
-    submitContactMutation.mutate(data);
+  const handleInputChange = (field: keyof ContactForm, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const issueTypeIcons = {
-    profile: User,
-    payment: CreditCard,
-    abuse: AlertTriangle,
-    suggestion: Lightbulb,
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    setAttachedImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
   };
+
+  const removeImage = () => {
+    setAttachedImage(null);
+    setImagePreview('');
+  };
+
+  const uploadImageToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(`${API_URL}/api/upload/contact-image`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload image');
+    }
+
+    const data = await response.json();
+    return data.imageUrl;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!formData.name || !formData.email || !formData.phone || !formData.subject || !formData.message) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      let imageUrl = '';
+      
+      // Upload image if attached
+      if (attachedImage) {
+        setUploading(true);
+        imageUrl = await uploadImageToCloudinary(attachedImage);
+        setUploading(false);
+      }
+
+      // Combine email and phone cleverly to avoid schema changes
+      const emailWithPhone = `${formData.email} | Phone: ${formData.phone}`;
+
+      // Add image URL to description if uploaded
+      const messageWithImage = imageUrl 
+        ? `${formData.message}\n\n[Attached Image: ${imageUrl}]`
+        : formData.message;
+
+      // Submit to existing backend endpoint
+      const response = await fetch(`${API_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: formData.name,
+          email: emailWithPhone, // Smart: combine email + phone
+          subject: formData.subject,
+          message: messageWithImage, // Smart: include image URL in message
+          issueType: formData.issueType,
+          priority: formData.priority
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Your message has been sent successfully! We\'ll get back to you soon.');
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          issueType: 'profile',
+          subject: '',
+          message: '',
+          priority: 'medium'
+        });
+        setAttachedImage(null);
+        setImagePreview('');
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+      setUploading(false);
+    }
+  };
+
+  const issueTypeOptions = [
+    { value: 'profile', label: 'Profile/Account Issue', icon: User, color: 'text-blue-500' },
+    { value: 'payment', label: 'Payment Issue', icon: CreditCard, color: 'text-green-500' },
+    { value: 'abuse', label: 'Report Abuse/Harassment', icon: AlertTriangle, color: 'text-red-500' },
+    { value: 'suggestion', label: 'Suggestion for Developer', icon: Lightbulb, color: 'text-yellow-500' },
+  ];
 
   return (
-    <div className="min-h-screen bg-white py-20">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link to="/" className="flex items-center space-x-2 text-gray-600 hover:text-pink-500">
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Home</span>
+            </Link>
+            <h1 className="text-xl font-bold gradient-text">Contact Us</h1>
+            <div className="w-32"></div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center mb-8">
           <div className="text-5xl mb-4">📞</div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
-          <p className="text-xl text-gray-600">
-            We're here to help! Choose the category that best describes your issue.
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Get in Touch</h2>
+          <p className="text-lg text-gray-600">
+            We're here to help! Send us a message and we'll respond as soon as possible.
           </p>
         </div>
-        
-        <Card className="bg-white rounded-2xl shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-center">Submit Support Request</CardTitle>
-          </CardHeader>
-          <CardContent className="p-8">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Issue Type */}
-                <FormField
-                  control={form.control}
-                  name="issueType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Type of Issue</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-3"
-                        >
-                          <div className="flex items-center space-x-2 p-4 border border-gray-200 rounded-lg hover:border-rgpv-pink transition-colors">
-                            <RadioGroupItem value="profile" id="profile" data-testid="radio-profile" />
-                            <label htmlFor="profile" className="flex items-center cursor-pointer">
-                              <User className="text-rgpv-pink mr-2" size={20} />
-                              <span>Profile/Account Issue</span>
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2 p-4 border border-gray-200 rounded-lg hover:border-rgpv-pink transition-colors">
-                            <RadioGroupItem value="payment" id="payment" data-testid="radio-payment" />
-                            <label htmlFor="payment" className="flex items-center cursor-pointer">
-                              <CreditCard className="text-rgpv-pink mr-2" size={20} />
-                              <span>Payment Issue</span>
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2 p-4 border border-gray-200 rounded-lg hover:border-rgpv-pink transition-colors">
-                            <RadioGroupItem value="abuse" id="abuse" data-testid="radio-abuse" />
-                            <label htmlFor="abuse" className="flex items-center cursor-pointer">
-                              <AlertTriangle className="text-red-500 mr-2" size={20} />
-                              <span>Report Abuse/Harassment</span>
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2 p-4 border border-gray-200 rounded-lg hover:border-rgpv-pink transition-colors">
-                            <RadioGroupItem value="suggestion" id="suggestion" data-testid="radio-suggestion" />
-                            <label htmlFor="suggestion" className="flex items-center cursor-pointer">
-                              <Lightbulb className="text-yellow-500 mr-2" size={20} />
-                              <span>Suggestion for Developer</span>
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* User Information */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Name</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter your name" 
-                            {...field}
-                            data-testid="input-name"
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Contact Form */}
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Send className="w-5 h-5 text-pink-500" />
+                  <span>Send us a Message</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="email">Email Address *</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          placeholder="your.email@domain.com"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <Label htmlFor="phone">Phone Number *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        placeholder="+91 XXXXX XXXXX"
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Issue Type */}
+                  <div>
+                    <Label htmlFor="issueType">Type of Issue *</Label>
+                    <Select value={formData.issueType} onValueChange={(value) => handleInputChange('issueType', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select issue type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {issueTypeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center space-x-2">
+                              <option.icon className={`w-4 h-4 ${option.color}`} />
+                              <span>{option.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Priority */}
+                  <div>
+                    <Label htmlFor="priority">Priority Level</Label>
+                    <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low - General inquiry</SelectItem>
+                        <SelectItem value="medium">Medium - Account issue</SelectItem>
+                        <SelectItem value="high">High - Payment or technical problem</SelectItem>
+                        <SelectItem value="urgent">Urgent - Safety or harassment issue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Subject */}
+                  <div>
+                    <Label htmlFor="subject">Subject *</Label>
+                    <Input
+                      id="subject"
+                      type="text"
+                      value={formData.subject}
+                      onChange={(e) => handleInputChange('subject', e.target.value)}
+                      placeholder="Brief description of your issue"
+                      required
+                    />
+                  </div>
+
+                  {/* Message */}
+                  <div>
+                    <Label htmlFor="message">Message *</Label>
+                    <Textarea
+                      id="message"
+                      value={formData.message}
+                      onChange={(e) => handleInputChange('message', e.target.value)}
+                      placeholder="Please provide detailed information about your issue..."
+                      rows={5}
+                      required
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      {formData.message.length}/1000 characters
+                    </p>
+                  </div>
+
+                  {/* Image Upload */}
+                  <div>
+                    <Label htmlFor="image">Attach Image (Optional)</Label>
+                    <div className="mt-2">
+                      {!attachedImage ? (
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-pink-500 transition-colors">
+                          <input
+                            id="image"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email"
-                            placeholder="your.email@student.rgpv.ac.in" 
-                            {...field}
-                            data-testid="input-email"
+                          <label htmlFor="image" className="cursor-pointer">
+                            <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 mb-2">Click to upload an image</p>
+                            <p className="text-sm text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full h-48 object-cover rounded-lg border"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                          <button
+                            type="button"
+                            onClick={removeImage}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                            {attachedImage.name}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    disabled={loading || uploading}
+                    className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white py-3"
+                  >
+                    {uploading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Uploading Image...</span>
+                      </div>
+                    ) : loading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Sending Message...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center space-x-2">
+                        <Send className="w-4 h-4" />
+                        <span>Send Message</span>
+                      </div>
                     )}
-                  />
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Contact Info Sidebar */}
+          <div className="space-y-6">
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-5 h-5 text-pink-500" />
+                  <div>
+                    <p className="font-medium">Email</p>
+                    <p className="text-sm text-gray-600">support@rgpvmates.com</p>
+                  </div>
                 </div>
                 
-                {/* Subject */}
-                <FormField
-                  control={form.control}
-                  name="subject"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subject</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Brief description of your issue" 
-                          {...field}
-                          data-testid="input-subject"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Detailed Description */}
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Detailed Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          rows={6}
-                          placeholder="Please provide as much detail as possible about your issue..."
-                          {...field}
-                          data-testid="textarea-description"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Priority Level */}
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Priority Level</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-priority">
-                            <SelectValue placeholder="Select priority level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="low">Low - General inquiry</SelectItem>
-                          <SelectItem value="medium">Medium - Account issue</SelectItem>
-                          <SelectItem value="high">High - Payment or technical problem</SelectItem>
-                          <SelectItem value="urgent">Urgent - Safety or harassment issue</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Submit Button */}
-                <Button 
-                  type="submit" 
-                  disabled={submitContactMutation.isPending}
-                  className="w-full bg-rgpv-pink text-white py-3 rounded-lg font-semibold hover:bg-rgpv-dark transition-colors"
-                  data-testid="button-submit-request"
-                >
-                  {submitContactMutation.isPending ? "Submitting..." : "Submit Support Request"}
-                </Button>
-              </form>
-            </Form>
-            
-            {/* Expected Response Time */}
-            <Card className="mt-8 bg-blue-50 border border-blue-200">
-              <CardContent className="p-4">
-                <div className="flex items-start">
-                  <Clock className="text-blue-500 mt-1 mr-3" size={20} />
+                <div className="flex items-center space-x-3">
+                  <Phone className="w-5 h-5 text-pink-500" />
                   <div>
-                    <h4 className="font-medium text-blue-900">Expected Response Time</h4>
-                    <div className="text-sm text-blue-700 mt-1 space-y-1">
-                      <p>• General inquiries: 24-48 hours</p>
-                      <p>• Account issues: 12-24 hours</p>
-                      <p>• Payment problems: 6-12 hours</p>
-                      <p>• Safety issues: Immediate (1-2 hours)</p>
-                    </div>
+                    <p className="font-medium">Phone</p>
+                    <p className="text-sm text-gray-600">+91 XXXXX XXXXX</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </CardContent>
-        </Card>
-        
-        <div className="text-center mt-8">
-          <Button 
-            onClick={() => window.history.back()}
-            variant="ghost"
-            className="text-rgpv-pink hover:underline"
-            data-testid="button-go-back"
-          >
-            ← Go Back
-          </Button>
+
+            {/* Response Time */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-pink-500" />
+                  <span>Response Time</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>General inquiries: 24-48 hours</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span>Account issues: 12-24 hours</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span>Payment problems: 6-12 hours</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span>Safety issues: 1-2 hours</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* FAQ */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Help</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="font-medium">Account Issues?</p>
+                    <p className="text-gray-600">Check your email for verification links</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Payment Problems?</p>
+                    <p className="text-gray-600">Include transaction ID if available</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">Report User?</p>
+                    <p className="text-gray-600">Please include screenshots as evidence</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

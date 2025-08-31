@@ -1,110 +1,171 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
-import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
-import Registration from "@/pages/registration";
-import ProfileSetup from "@/pages/profile-setup";
-import Verification from "@/pages/verification";
-import Payment from "@/pages/payment";
-import AppDashboard from "@/pages/app-dashboard";
-import SafetyGuidelines from "@/pages/safety-guidelines";
-import Contact from "@/pages/contact";
-import Admin from "@/pages/admin";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-function Router() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+// Pages
+import Landing from './pages/landing';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Discover from './pages/Discover';
+import Matches from './pages/matches';
+import Messages from './pages/messages';
+import Chat from './pages/chat';
+import Profile from './pages/profile';
+import ProfileEdit from './pages/profile-edit';
+import Settings from './pages/settings';
+import Admin from './pages/admin';
+import Contact from './pages/contact';
+import SafetyGuidelines from './pages/safety-guidelines';
+import Payment from './pages/payment';
+import TermsConditions from './pages/terms-conditions';
+import RegistrationSteps from './pages/registration-steps';
+import AdminLogin from './pages/admin-login';
+import NotFound from './pages/not-found';
 
-  return (
-    <Switch>
-      {/* Public routes */}
-      <Route path="/safety" component={SafetyGuidelines} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/admin" component={Admin} />
-      
-      {isLoading ? (
-        <Route path="*">
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-4xl mb-4">💕</div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
-          </div>
-        </Route>
-      ) : !isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/registration" component={Registration} />
-          <Route component={NotFound} />
-        </>
-      ) : (
-        <>
-          {/* Authenticated routes - check profile completion status */}
-          {!user?.profile ? (
-            <>
-              <Route path="/profile-setup" component={ProfileSetup} />
-              <Route path="*">
-                <ProfileSetup />
-              </Route>
-            </>
-          ) : user.profile.verificationStatus === 'pending' ? (
-            <>
-              <Route path="/verification" component={Verification} />
-              <Route path="*">
-                <Verification />
-              </Route>
-            </>
-          ) : user.profile.verificationStatus === 'rejected' ? (
-            <Route path="*">
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center max-w-md mx-4">
-                  <div className="text-4xl mb-4">❌</div>
-                  <h1 className="text-2xl font-bold text-gray-900 mb-4">Verification Rejected</h1>
-                  <p className="text-gray-600 mb-6">
-                    Your student ID verification was rejected. Please contact support for assistance.
-                  </p>
-                  <button 
-                    onClick={() => window.location.href = "/contact"}
-                    className="bg-rgpv-pink text-white px-6 py-3 rounded-lg font-semibold hover:bg-rgpv-dark transition-colors"
-                  >
-                    Contact Support
-                  </button>
-                </div>
-              </div>
-            </Route>
-          ) : !user.profile.isPaid ? (
-            <>
-              <Route path="/payment" component={Payment} />
-              <Route path="*">
-                <Payment />
-              </Route>
-            </>
-          ) : (
-            <>
-              <Route path="/" component={AppDashboard} />
-              <Route path="/app" component={AppDashboard} />
-              <Route path="/profile-setup" component={ProfileSetup} />
-              <Route path="/verification" component={Verification} />
-              <Route path="/payment" component={Payment} />
-              <Route component={NotFound} />
-            </>
-          )}
-        </>
-      )}
-    </Switch>
-  );
-}
+// Protected Route Component
+const ProtectedRoute = ({ children, requireAuth = true, requireAdmin = false }: {
+  children: React.ReactNode;
+  requireAuth?: boolean;
+  requireAdmin?: boolean;
+}) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-orange-50">
+        <div className="text-center">
+          <div className="spinner w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (requireAuth && !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requireAdmin && (!user || !user.isAdmin)) {
+    return <Navigate to="/admin-login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AuthProvider>
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-orange-50">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/safety" element={<SafetyGuidelines />} />
+            <Route path="/terms" element={<TermsConditions />} />
+            <Route path="/registration-steps" element={<RegistrationSteps />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/discover" element={
+              <ProtectedRoute>
+                <Discover />
+              </ProtectedRoute>
+            } />
+            <Route path="/matches" element={
+              <ProtectedRoute>
+                <Matches />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <Messages />
+              </ProtectedRoute>
+            } />
+            <Route path="/chat/:matchId" element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile/edit" element={
+              <ProtectedRoute>
+                <ProfileEdit />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/payment" element={
+              <ProtectedRoute>
+                <Payment />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute requireAdmin>
+                <Admin />
+              </ProtectedRoute>
+            } />
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+
+          {/* Toast Notifications */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'white',
+                color: '#333',
+                border: '1px solid #e5e7eb',
+                borderRadius: '12px',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#E91E63',
+                  secondary: 'white',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: 'white',
+                },
+              },
+            }}
+          />
+        </div>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -1,6 +1,26 @@
-node_modules
-dist
+# Node
+node_modules/
+npm-debug.log*
+
+# Build
+dist/
+build/
+server/public/
+
+# Env files
+.env
+client/.env
+server/.env
+
+# OS
 .DS_Store
-server/public
-vite.config.ts.*
+
+# Archives
 *.tar.gz
+*.zip
+
+# IDE
+.vscode/
+.idea/
+
+.local

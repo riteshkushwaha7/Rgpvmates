@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import type { Profile, User } from "@shared/schema";
+import type { Profile, User } from "../../shared/schema";
 
 type SwipeProfile = Profile & {
   user?: User;

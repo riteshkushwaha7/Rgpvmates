@@ -1,49 +1,69 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Heart } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import { useEffect } from "react";
-import type { Match, User, Profile } from "@shared/schema";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Heart, MessageCircle, User } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import toast from 'react-hot-toast';
+import BottomNavigation from '../components/BottomNavigation';
 
-type PopulatedMatch = Match & {
-  otherUser?: User & {
-    profile?: Profile;
-  };
-};
-
-interface MatchesProps {
-  onChatOpen: (matchId: string) => void;
+interface Match {
+  id: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
+  college: string;
+  branch: string;
+  graduationYear: string;
+  age: number;
+  createdAt: string;
 }
 
-export default function Matches({ onChatOpen }: MatchesProps) {
-  const { toast } = useToast();
-
-  const { data: matches = [], isLoading, error } = useQuery<PopulatedMatch[]>({
-    queryKey: ["/api/matches"],
-    retry: false,
-  });
+export default function Matches() {
+  const navigate = useNavigate();
+  
+  const handleChatOpen = (matchId: string) => {
+    navigate(`/chat/${matchId}`);
+  };
+  const { user } = useAuth();
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (error && isUnauthorizedError(error)) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-    }
-  }, [error, toast]);
+    fetchMatches();
+  }, []);
 
-  if (isLoading) {
+  const fetchMatches = async () => {
+    try {
+      setLoading(true);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/api/matching/matches`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMatches(data);
+      } else {
+        toast.error('Failed to load matches');
+      }
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+      toast.error('Failed to load matches');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="p-4 md:p-8">
         <h2 className="text-2xl font-bold mb-6">Your Matches</h2>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-gray-200 rounded-xl p-4 animate-pulse h-20"></div>
+            <div key={i} className="bg-gray-200 rounded-xl p-6 animate-pulse h-64"></div>
           ))}
         </div>
       </div>
@@ -55,7 +75,9 @@ export default function Matches({ onChatOpen }: MatchesProps) {
       <div className="p-4 md:p-8">
         <h2 className="text-2xl font-bold mb-6">Your Matches</h2>
         <div className="text-center py-12">
-          <Heart className="mx-auto text-gray-400 mb-4" size={64} />
+          <div className="w-32 h-32 bg-gradient-to-br from-pink-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Heart className="w-16 h-16 text-pink-500" />
+          </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No matches yet</h3>
           <p className="text-gray-600">
             Start swiping to find your perfect match!
@@ -65,93 +87,68 @@ export default function Matches({ onChatOpen }: MatchesProps) {
     );
   }
 
-  const newMatches = matches.slice(0, 3); // Show first 3 as "new"
-  const allMatches = matches;
-
   return (
     <div className="p-4 md:p-8">
       <h2 className="text-2xl font-bold mb-6">Your Matches</h2>
       
-      {/* New Matches */}
-      {newMatches.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">New Matches</h3>
-          <div className="flex space-x-4 overflow-x-auto pb-4">
-            {newMatches.map((match) => (
-              <div 
-                key={match.id} 
-                className="flex-shrink-0 text-center cursor-pointer"
-                onClick={() => onChatOpen(match.id)}
-                data-testid={`new-match-${match.id}`}
-              >
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-red-500 mb-2 relative overflow-hidden">
-                  {match.otherUser.profile?.profilePicture ? (
+      {/* Matches Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {matches.map((match) => (
+          <Card 
+            key={match.id}
+            className="group cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 animate-fade-in"
+            onClick={() => handleChatOpen(match.id)}
+          >
+            <CardContent className="p-6">
+              <div className="text-center">
+                {/* Profile Picture */}
+                <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 bg-gradient-to-br from-pink-100 to-orange-100">
+                  {match.profileImageUrl ? (
                     <img 
-                      src={match.otherUser.profile.profilePicture}
-                      alt={match.otherUser.firstName}
+                      src={match.profileImageUrl}
+                      alt={`${match.firstName} ${match.lastName}`}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                      {(match.otherUser.firstName?.[0] || 'U').toUpperCase()}
+                    <div className="w-full h-full flex items-center justify-center">
+                      <User className="w-10 h-10 text-gray-400" />
                     </div>
                   )}
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-heartbeat"></div>
                 </div>
-                <p className="text-sm font-medium">{match.otherUser.firstName}</p>
+
+                {/* Name + Age */}
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {match.firstName} {match.lastName}, {match.age}
+                </h3>
+
+                {/* College + Grad Year + Branch Label */}
+                <p className="text-sm text-gray-600 mb-4">
+                  {match.college} • {match.graduationYear} • {match.branch}
+                </p>
+
+                {/* Chat Button */}
+                <Button 
+                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white transition-all duration-200 group-hover:scale-105"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChatOpen(match.id);
+                  }}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Chat
+                </Button>
+
+                {/* Match Date */}
+                <p className="text-xs text-gray-500 mt-3">
+                  Matched {new Date(match.createdAt).toLocaleDateString()}
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* All Conversations */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Messages</h3>
-        <div className="space-y-3">
-          {allMatches.map((match) => (
-            <Card 
-              key={match.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => onChatOpen(match.id)}
-              data-testid={`match-${match.id}`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 overflow-hidden">
-                    {match.otherUser.profile?.profilePicture ? (
-                      <img 
-                        src={match.otherUser.profile.profilePicture}
-                        alt={match.otherUser.firstName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                        {(match.otherUser.firstName?.[0] || 'U').toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-semibold text-gray-900">
-                        {match.otherUser.firstName} {match.otherUser.lastName}
-                      </h4>
-                      <span className="text-xs text-gray-500">
-                        {new Date(match.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {match.otherUser.profile?.branch?.replace(/-/g, ' ').split(' ').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                      ).join(' ')} • {match.otherUser.profile?.year} Year
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+      
+      <BottomNavigation />
     </div>
   );
 }

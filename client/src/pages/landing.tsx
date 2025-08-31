@@ -1,96 +1,140 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Shield, Users, GraduationCap } from "lucide-react";
-import { useLocation } from "wouter";
+import { Link } from 'react-router-dom';
+import { Heart, Shield, Users, MessageCircle } from 'lucide-react';
 
-export default function Landing() {
-  const [, setLocation] = useLocation();
-
+const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rgpv-bg to-white">
-      {/* Navigation */}
-      <nav className="bg-white shadow-md fixed top-0 w-full z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="text-2xl font-bold text-rgpv-pink">💕 RGPV Mates</div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-white to-orange-50">
+      {/* Floating Bubbles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="floating-bubble absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-pink-300 to-pink-400 rounded-full opacity-30"></div>
+        <div className="floating-bubble absolute top-40 right-20 w-16 h-16 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full opacity-40"></div>
+        <div className="floating-bubble absolute bottom-32 left-20 w-24 h-24 bg-gradient-to-br from-pink-200 to-pink-300 rounded-full opacity-25"></div>
+        <div className="floating-bubble absolute bottom-20 right-10 w-12 h-12 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full opacity-35"></div>
+        <div className="floating-bubble absolute top-1/2 left-1/4 w-18 h-18 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full opacity-20"></div>
+        <div className="floating-bubble absolute top-1/3 right-1/3 w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full opacity-30"></div>
+      </div>
+
+      {/* Header */}
+      <header className="relative z-10 px-6 py-4">
+        <nav className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
+              <Heart className="w-6 h-6 text-pink-500" />
             </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <a href="#features" className="text-gray-700 hover:text-rgpv-pink px-3 py-2 rounded-md text-sm font-medium">Features</a>
-                <a href="#safety" onClick={() => setLocation('/safety')} className="text-gray-700 hover:text-rgpv-pink px-3 py-2 rounded-md text-sm font-medium">Safety</a>
-                <a href="#contact" onClick={() => setLocation('/contact')} className="text-gray-700 hover:text-rgpv-pink px-3 py-2 rounded-md text-sm font-medium">Contact</a>
-                <Button 
-                  onClick={() => window.location.href = "/api/login"}
-                  className="bg-rgpv-pink text-white px-4 py-2 rounded-lg hover:bg-rgpv-dark transition-colors"
-                  data-testid="button-login"
-                >
-                  Login
-                </Button>
+            <span className="text-2xl font-bold gradient-text">RGPV Mates</span>
+          </div>
+          
+          <div className="hidden md:flex items-center space-x-8">
+            <Link to="/safety" className="text-gray-600 hover:text-pink-500 transition-colors">
+              Safety
+            </Link>
+            <Link to="/terms" className="text-gray-600 hover:text-pink-500 transition-colors">
+              Terms
+            </Link>
+                         <Link to="/contact" className="text-gray-600 hover:text-pink-500 transition-colors">
+               Contact
+             </Link>
+             <Link to="/login" className="gradient-button text-white px-6 py-2 rounded-full font-semibold">
+               Login
+             </Link>
+          </div>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <main className="relative z-10 px-6 py-20">
+        <div className="max-w-7xl mx-auto text-center">
+          {/* Hero Icons */}
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="w-32 h-32 bg-gradient-to-br from-pink-400 to-orange-400 rounded-full flex items-center justify-center shadow-2xl">
+                <Heart className="w-16 h-16 text-white" />
+              </div>
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-orange-300 to-pink-300 rounded-full flex items-center justify-center shadow-lg">
+                <Heart className="w-10 h-10 text-white" />
               </div>
             </div>
           </div>
-        </div>
-      </nav>
 
-      {/* Hero Section */}
-      <section className="pt-16 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center">
-            <div className="animate-float mb-8">
-              <span className="text-6xl md:text-8xl">💕</span>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Find Your <span className="text-rgpv-pink">RGPV</span> Match
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Connect with verified RGPV students in a safe, secure environment. 
-              Swipe, match, and find meaningful connections with your college mates.
-            </p>
-            <div className="space-y-4 md:space-y-0 md:space-x-4 md:flex md:justify-center">
-              <Button
-                onClick={() => window.location.href = "/api/login"}
-                className="w-full md:w-auto bg-rgpv-pink text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-rgpv-dark transition-all transform hover:scale-105 animate-pulseGlow"
-                data-testid="button-get-started"
-              >
-                Get Started - ₹99
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full md:w-auto border-2 border-rgpv-pink text-rgpv-pink px-8 py-4 rounded-xl text-lg font-semibold hover:bg-rgpv-pink hover:text-white transition-all"
-                data-testid="button-learn-more"
-              >
-                Learn More
-              </Button>
-            </div>
-          </div>
+          {/* Hero Text */}
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
+            <span className="text-gray-800">Find Your </span>
+            <span className="gradient-text">RGPV</span>
+            <span className="text-gray-800"> Match</span>
+          </h1>
           
-          {/* Feature Preview Cards */}
-          <div id="features" className="mt-20 grid md:grid-cols-3 gap-8">
-            <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <GraduationCap className="text-4xl mb-4 text-rgpv-pink" size={48} />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Verified Students</h3>
-                <p className="text-gray-600">Only verified RGPV students with ID verification</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <Shield className="text-4xl mb-4 text-rgpv-pink" size={48} />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Safe & Secure</h3>
-                <p className="text-gray-600">Report & block features for your safety</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <Users className="text-4xl mb-4 text-rgpv-pink" size={48} />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Smart Matching</h3>
-                <p className="text-gray-600">Connect based on branch, year, and interests</p>
-              </CardContent>
-            </Card>
+          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Connect with verified RGPV students in a safe, secure environment. 
+            Swipe, match, and find meaningful connections with your college mates.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <Link 
+              to="/register"
+              className="gradient-button text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Get Started - ₹99
+            </Link>
+            <Link 
+              to="/safety"
+              className="border-2 border-pink-500 text-pink-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-pink-50 transition-all duration-300"
+            >
+              Learn More
+            </Link>
+          </div>
+
+          {/* Features Grid */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="card-hover bg-white p-8 rounded-2xl shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <Shield className="w-8 h-8 text-pink-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">Verified Students</h3>
+              <p className="text-gray-600">
+                All profiles are verified with student IDs to ensure authenticity and safety.
+              </p>
+            </div>
+
+            <div className="card-hover bg-white p-8 rounded-2xl shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <Users className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">Smart Matching</h3>
+              <p className="text-gray-600">
+                Advanced algorithms help you find compatible matches based on your preferences.
+              </p>
+            </div>
+
+            <div className="card-hover bg-white p-8 rounded-2xl shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-orange-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <MessageCircle className="w-8 h-8 text-pink-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">Safe Messaging</h3>
+              <p className="text-gray-600">
+                Built-in chat system with safety features to help you connect securely.
+              </p>
+            </div>
           </div>
         </div>
-      </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 px-6 py-8 mt-20">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-gray-500">
+            © 2025 RGPV Mates. All rights reserved. | 
+            <Link to="/safety" className="text-pink-500 hover:text-pink-600 ml-2">
+              Safety Guidelines
+            </Link> | 
+            <Link to="/contact" className="text-pink-500 hover:text-pink-600 ml-2">
+              Contact Us
+            </Link>
+          </p>
+        </div>
+      </footer>
     </div>
   );
-}
+};
+
+export default Landing;

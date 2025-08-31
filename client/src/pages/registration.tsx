@@ -39,7 +39,7 @@ export default function Registration() {
   const onSubmit = async (data: RegistrationForm) => {
     // In a real app, this would create the account
     // For now, we'll redirect to profile setup
-    console.log("Registration data:", data);
+    // Registration data logged
     setLocation("/profile-setup");
   };
 

@@ -24,7 +24,7 @@ import {
   type Report,
   type Block,
   type ContactSubmission,
-} from "@shared/schema";
+} from "./shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, ne, notInArray, sql } from "drizzle-orm";
 
