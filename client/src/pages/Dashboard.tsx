@@ -13,7 +13,7 @@ import {
 import BottomNavigation from '../components/BottomNavigation';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, getUserHeaders } = useAuth();
   const [stats, setStats] = useState({
     matches: 0,
     messages: 0,
@@ -31,7 +31,10 @@ const Dashboard = () => {
       
       // Fetch matches count
       const matchesResponse = await fetch(`${API_URL}/api/matching/matches`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getUserHeaders()
+        }
       });
       if (matchesResponse.ok) {
         const matches = await matchesResponse.json();
@@ -40,7 +43,10 @@ const Dashboard = () => {
 
       // Fetch unread messages count
       const messagesResponse = await fetch(`${API_URL}/api/messages/unread/count`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getUserHeaders()
+        }
       });
       if (messagesResponse.ok) {
         const { unreadCount } = await messagesResponse.json();

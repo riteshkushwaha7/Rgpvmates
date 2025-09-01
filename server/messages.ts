@@ -3,6 +3,7 @@ import { db } from './db.js';
 import { messages, matches, users } from './shared/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
+import { requireAuth } from './middleware/auth.js';
 
 const router = Router();
 
@@ -31,25 +32,23 @@ const messageSchema = z.object({
 });
 
 // Get unread message count for user
-router.get('/unread/count', async (req, res) => {
+router.get('/unread/count', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     // Get all matches for the current user
     const userMatches = await db.select().from(matches)
-      .where(eq(matches.user1Id, req.session.userId));
+      .where(eq(matches.user1Id, user.id));
 
     const userMatches2 = await db.select().from(matches)
-      .where(eq(matches.user2Id, req.session.userId));
+      .where(eq(matches.user2Id, user.id));
 
     const allMatches = [...userMatches, ...userMatches2];
     let totalUnread = 0;
 
     // Count unread messages in each match
     for (const match of allMatches) {
-      const otherUserId = match.user1Id === req.session.userId ? match.user2Id : match.user1Id;
+      const otherUserId = match.user1Id === user.id ? match.user2Id : match.user1Id;
       
       const unreadCount = await db.select().from(messages)
         .where(
@@ -71,12 +70,9 @@ router.get('/unread/count', async (req, res) => {
 });
 
 // Get chat history for a specific match
-router.get('/match/:matchId', async (req, res) => {
+router.get('/match/:matchId', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
+    const user = req.user;
     const { matchId } = req.params;
     
     // First, check if this match exists at all
@@ -91,7 +87,7 @@ router.get('/match/:matchId', async (req, res) => {
       .where(
         and(
           eq(matches.id, matchId),
-          eq(matches.user1Id, req.session.userId)
+          eq(matches.user1Id, user.id)
         )
       )
       .limit(1);

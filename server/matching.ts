@@ -3,6 +3,7 @@ import { db } from './db.js';
 import { users, matches, swipes } from './shared/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { requireAuth } from './middleware/auth.js';
 
 const router = Router();
 
@@ -13,25 +14,14 @@ const swipeSchema = z.object({
 });
 
 // Record a swipe (like/dislike)
-router.post('/swipe', async (req, res) => {
+router.post('/swipe', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
     const { swipedId, isLike } = swipeSchema.parse(req.body);
-
-    // Get current user
-    const currentUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
-    if (currentUser.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const user = currentUser[0];
+    const user = req.user;
 
     // Update user arrays
-    const likedUsers = user.likedUsers || [];
-    const dislikedUsers = user.dislikedUsers || [];
+    const likedUsers = (user.likedUsers as string[]) || [];
+    const dislikedUsers = (user.dislikedUsers as string[]) || [];
 
     if (isLike) {
       // Add to liked users if not already there
@@ -62,11 +52,11 @@ router.post('/swipe', async (req, res) => {
         dislikedUsers,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, req.session.userId));
+      .where(eq(users.id, user.id));
 
     // Record swipe in swipes table
     await db.insert(swipes).values({
-      swiperId: req.session.userId,
+      swiperId: user.id,
       swipedId,
       action: isLike,
     });
@@ -77,15 +67,15 @@ router.post('/swipe', async (req, res) => {
       // Check if the other user has also liked this user
       const otherUser = await db.select().from(users).where(eq(users.id, swipedId)).limit(1);
       if (otherUser.length > 0) {
-        const otherLikedUsers = otherUser[0].likedUsers || [];
-        if (otherLikedUsers.includes(req.session.userId)) {
+        const otherLikedUsers = (otherUser[0].likedUsers as string[]) || [];
+        if (otherLikedUsers.includes(user.id)) {
           isMatch = true;
 
           // Check if match already exists (in either direction)
           const existingMatch1 = await db.select().from(matches)
             .where(
               and(
-                eq(matches.user1Id, req.session.userId),
+                eq(matches.user1Id, user.id),
                 eq(matches.user2Id, swipedId)
               )
             )
@@ -95,7 +85,7 @@ router.post('/swipe', async (req, res) => {
             .where(
               and(
                 eq(matches.user1Id, swipedId),
-                eq(matches.user2Id, req.session.userId)
+                eq(matches.user2Id, user.id)
               )
             )
             .limit(1);
@@ -151,24 +141,22 @@ router.post('/swipe', async (req, res) => {
 });
 
 // Get user's matches
-router.get('/matches', async (req, res) => {
+router.get('/matches', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     // Get user's matches
     const userMatches = await db.select().from(matches)
       .where(
         and(
-          eq(matches.user1Id, req.session.userId)
+          eq(matches.user1Id, user.id)
         )
       );
 
     const userMatches2 = await db.select().from(matches)
       .where(
         and(
-          eq(matches.user2Id, req.session.userId)
+          eq(matches.user2Id, user.id)
         )
       );
 
@@ -177,7 +165,7 @@ router.get('/matches', async (req, res) => {
     const matchDetails = [];
 
     for (const match of allMatches) {
-      const otherUserId = match.user1Id === req.session.userId ? match.user2Id : match.user1Id;
+      const otherUserId = match.user1Id === user.id ? match.user2Id : match.user1Id;
       
       // Get other user's complete profile
       const otherUser = await db.select({

@@ -126,13 +126,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // Store user credentials for header-based authentication
+        const userCredentials = { email, password };
+        localStorage.setItem('userCredentials', JSON.stringify(userCredentials));
+        
         setUser(data.user);
         toast.success('Login successful!');
         
@@ -217,16 +220,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Get user headers for API calls
+  const getUserHeaders = () => {
+    const storedCreds = localStorage.getItem('userCredentials');
+    if (storedCreds) {
+      try {
+        const creds = JSON.parse(storedCreds);
+        return {
+          'x-user-email': creds.email,
+          'x-user-password': creds.password
+        };
+      } catch (error) {
+        console.error('Failed to parse stored user credentials');
+      }
+    }
+    return {};
+  };
+
   const logout = async () => {
     try {
-      // Clear admin credentials if they exist
+      // Clear all credentials
       localStorage.removeItem('adminCredentials');
-      
-      // Try regular logout
-      await fetch(`${API_URL}/api/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      localStorage.removeItem('userCredentials');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -256,6 +271,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     register,
     logout,
     checkAuth,
+    getUserHeaders,
   };
 
   return (

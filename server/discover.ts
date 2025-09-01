@@ -2,23 +2,14 @@ import { Router } from 'express';
 import { db } from './db.js';
 import { profiles, users } from './shared/schema.js';
 import { eq, and, not, inArray } from 'drizzle-orm';
+import { requireAuth } from './middleware/auth.js';
 
 const router = Router();
 
 // Get discoverable profiles (opposite gender, not liked/disliked/blocked)
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    // Get current user
-    const currentUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
-    if (currentUser.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const user = currentUser[0];
+    const user = req.user;
 
     // Get arrays of users this user has interacted with
     const likedUsers = user.likedUsers || [];
@@ -26,7 +17,7 @@ router.get('/', async (req, res) => {
     const blockedUsers = user.blockedUsers || [];
 
     // Get all users except current user and those already interacted with
-    const excludedUsers = [req.session.userId, ...likedUsers, ...dislikedUsers, ...blockedUsers];
+    const excludedUsers = [user.id, ...likedUsers, ...dislikedUsers, ...blockedUsers];
 
     // Get discoverable users (opposite gender, approved, not suspended, not interacted with)
     const discoverableUsers = await db
@@ -71,19 +62,9 @@ router.get('/', async (req, res) => {
 });
 
 // Get next profile for swiping
-router.get('/next', async (req, res) => {
+router.get('/next', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    // Get current user
-    const currentUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
-    if (currentUser.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const user = currentUser[0];
+    const user = req.user;
 
     // Get arrays of users this user has interacted with
     const likedUsers = user.likedUsers || [];
@@ -91,7 +72,7 @@ router.get('/next', async (req, res) => {
     const blockedUsers = user.blockedUsers || [];
 
     // Get all users except current user and those already interacted with
-    const excludedUsers = [req.session.userId, ...likedUsers, ...dislikedUsers, ...blockedUsers];
+    const excludedUsers = [user.id, ...likedUsers, ...dislikedUsers, ...blockedUsers];
 
     // Get next user for swiping
     const nextUser = await db

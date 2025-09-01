@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 import { Heart, X, ArrowLeft, User, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -22,6 +23,7 @@ interface Profile {
 }
 
 const Discover = () => {
+  const { getUserHeaders } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,10 @@ const Discover = () => {
       setLoading(true);
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const response = await fetch(`${API_URL}/api/discover`, {
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getUserHeaders()
+        }
       });
 
       if (response.ok) {
@@ -68,8 +73,8 @@ const Discover = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getUserHeaders()
         },
-        credentials: 'include',
         body: JSON.stringify({
           swipedId: profile.userId,
           isLike,
