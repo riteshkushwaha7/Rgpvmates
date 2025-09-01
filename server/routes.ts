@@ -21,17 +21,56 @@ router.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Database health check
+router.get('/db-health', async (req, res) => {
+  try {
+    // Test database connection
+    const result = await db.execute('SELECT 1 as test');
+    res.json({ 
+      status: 'OK', 
+      database: 'Connected',
+      timestamp: new Date().toISOString() 
+    });
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    res.status(500).json({ 
+      status: 'ERROR', 
+      database: 'Failed',
+      error: error.message,
+      timestamp: new Date().toISOString() 
+    });
+  }
+});
+
 // Session test endpoint
 router.get('/session-test', (req, res) => {
-  res.json({
-    sessionId: req.sessionID,
-    sessionData: {
-      userId: req.session.userId,
-      email: req.session.email,
-      isAdmin: req.session.isAdmin
-    },
-    sessionKeys: Object.keys(req.session),
-    timestamp: new Date().toISOString()
+  // Test setting a session value
+  if (!req.session.testValue) {
+    req.session.testValue = 'Test_' + Date.now();
+    console.log('🔧 Set test session value:', req.session.testValue);
+  }
+  
+  // Force save to test persistence
+  req.session.save((err) => {
+    if (err) {
+      console.error('❌ Session save error:', err);
+      return res.status(500).json({ error: 'Session save failed', details: err.message });
+    }
+    
+    console.log('✅ Session saved successfully');
+    
+    res.json({
+      sessionId: req.sessionID,
+      sessionData: {
+        userId: req.session.userId,
+        email: req.session.email,
+        isAdmin: req.session.isAdmin,
+        testValue: req.session.testValue
+      },
+      sessionKeys: Object.keys(req.session),
+      timestamp: new Date().toISOString(),
+      message: 'Session test completed'
+    });
   });
 });
 

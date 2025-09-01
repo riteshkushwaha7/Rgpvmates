@@ -36,20 +36,31 @@ router.post('/login', async (req, res) => {
     console.log('🔐 Admin login - Session set:', {
       userId: req.session.userId,
       email: req.session.email,
-      isAdmin: req.session.isAdmin
+      isAdmin: req.session.isAdmin,
+      sessionId: req.sessionID
     });
 
-    res.json({
-      message: 'Admin login successful',
-      user: {
-        id: req.session.userId,
-        email: req.session.email,
-        firstName: 'Admin',
-        lastName: 'User',
-        isApproved: true,
-        isAdmin: true,
-        paymentDone: true
+    // Force session save
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Session save error:', err);
+        return res.status(500).json({ error: 'Failed to save session' });
       }
+      
+      console.log('✅ Session saved successfully');
+      
+      res.json({
+        message: 'Admin login successful',
+        user: {
+          id: req.session.userId,
+          email: req.session.email,
+          firstName: 'Admin',
+          lastName: 'User',
+          isApproved: true,
+          isAdmin: true,
+          paymentDone: true
+        }
+      });
     });
 
   } catch (error) {
@@ -125,6 +136,41 @@ router.get('/test', (req, res) => {
       ADMIN_USERNAME: process.env.ADMIN_USERNAME ? 'Set' : 'Not Set',
       ADMIN_PWD: process.env.ADMIN_PWD ? 'Set' : 'Not Set'
     }
+  });
+});
+
+// Simple session test endpoint (no middleware required)
+router.get('/session-test', (req, res) => {
+  // Set a test admin session
+  req.session.userId = 'TEST_ADMIN_' + Date.now();
+  req.session.email = 'test@admin.com';
+  req.session.isAdmin = true;
+  
+  console.log('🔧 Test admin session set:', {
+    userId: req.session.userId,
+    email: req.session.email,
+    isAdmin: req.session.isAdmin
+  });
+  
+  // Force save
+  req.session.save((err) => {
+    if (err) {
+      console.error('❌ Test session save error:', err);
+      return res.status(500).json({ error: 'Test session save failed' });
+    }
+    
+    console.log('✅ Test admin session saved');
+    
+    res.json({
+      message: 'Test admin session created',
+      sessionId: req.sessionID,
+      sessionData: {
+        userId: req.session.userId,
+        email: req.session.email,
+        isAdmin: req.session.isAdmin
+      },
+      timestamp: new Date().toISOString()
+    });
   });
 });
 

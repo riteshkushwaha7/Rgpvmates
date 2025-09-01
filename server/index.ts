@@ -16,6 +16,7 @@ declare module 'express-session' {
     userId?: string;
     email?: string;
     isAdmin?: boolean;
+    testValue?: string;
   }
 }
 
@@ -44,7 +45,64 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session configuration - using PostgreSQL store for production
+let sessionStore;
+
+// Create PostgreSQL session store
 const PgSession = connectPgSimple(session);
+sessionStore = new PgSession({
+  conObject: {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  },
+  tableName: 'sessions',
+  createTableIfMissing: false, // We'll create it manually
+});
+
+console.log('🔧 PostgreSQL session store created');
+
+// Manually create sessions table if it doesn't exist
+const createSessionsTable = async () => {
+  try {
+    const client = new pg.Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    });
+    
+    await client.connect();
+    
+    // Drop existing table if it exists (to avoid conflicts)
+    await client.query('DROP TABLE IF EXISTS sessions CASCADE');
+    
+    const createTableSQL = `
+      CREATE TABLE sessions (
+        sid VARCHAR(255) PRIMARY KEY,
+        sess JSON NOT NULL,
+        expire TIMESTAMP(6) NOT NULL
+      );
+      
+      CREATE INDEX "IDX_sessions_expire" ON sessions (expire);
+    `;
+    
+    await client.query(createTableSQL);
+    await client.end();
+    
+    console.log('✅ Sessions table created successfully');
+  } catch (error) {
+    console.error('❌ Failed to create sessions table:', error);
+    console.log('🔄 Falling back to MemoryStore...');
+    
+    // If table creation fails, use MemoryStore
+    const MemoryStore = require('memorystore')(session);
+    sessionStore = new MemoryStore({
+      checkPeriod: 86400000,
+    });
+    console.log('🔧 Switched to MemoryStore');
+  }
+};
+
+// Create sessions table on startup
+createSessionsTable();
+
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: true,
@@ -55,14 +113,7 @@ const sessionMiddleware = session({
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax',
   },
-  store: new PgSession({
-    conObject: {
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    },
-    tableName: 'sessions', // This table will be created automatically
-    createTableIfMissing: true,
-  }),
+  store: sessionStore,
 });
 
 console.log('🔧 Session store configured with PostgreSQL');
