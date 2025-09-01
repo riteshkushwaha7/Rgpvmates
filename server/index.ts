@@ -37,12 +37,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const MemoryStoreSession = MemoryStore(session);
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
+  resave: true, // Changed to true for better session persistence
+  saveUninitialized: true, // Changed to true for admin sessions
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax', // Added for better cross-origin support
   },
   store: new MemoryStoreSession({
     checkPeriod: 86400000, // prune expired entries every 24h

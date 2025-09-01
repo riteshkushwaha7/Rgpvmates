@@ -20,53 +20,27 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
-    // Find or create admin user
-    const adminEmail = `${process.env.ADMIN_USERNAME}@rgpv-mates.com`;
-    let adminUser = await db.select().from(users).where(eq(users.email, adminEmail)).limit(1);
-    
-    if (adminUser.length === 0) {
-      // Create admin user if it doesn't exist
-      const [newAdmin] = await db.insert(users).values({
-        email: adminEmail,
-        firstName: 'Admin',
-        lastName: 'User',
-        age: 25,
-        gender: 'male',
-        college: 'University Institute of Technology (UIT)',
-        branch: 'Computer Science & Engineering',
-        graduationYear: '2024',
-        password: 'admin_password_hash', // This won't be used for admin login
-        isApproved: true,
-        isAdmin: true,
-        paymentDone: true,
-        premiumBypassed: true,
-        paymentId: 'ADMIN_BYPASS'
-      }).returning();
-      adminUser = [newAdmin];
-    }
-
-    // Set admin session
-    req.session.userId = adminUser[0].id;
-    req.session.email = adminUser[0].email;
+    // Set admin session directly (no database user needed)
+    req.session.userId = 'ADMIN_' + Date.now();
+    req.session.email = username;
     req.session.isAdmin = true;
     
     console.log('🔐 Admin login - Session set:', {
       userId: req.session.userId,
       email: req.session.email,
-      isAdmin: req.session.isAdmin,
-      expectedEmail: `${process.env.ADMIN_USERNAME}@rgpv-mates.com`
+      isAdmin: req.session.isAdmin
     });
 
     res.json({
       message: 'Admin login successful',
       user: {
-        id: adminUser[0].id,
-        email: adminUser[0].email,
-        firstName: adminUser[0].firstName,
-        lastName: adminUser[0].lastName,
-        isApproved: adminUser[0].isApproved,
-        isAdmin: adminUser[0].isAdmin,
-        paymentDone: adminUser[0].paymentDone
+        id: req.session.userId,
+        email: req.session.email,
+        firstName: 'Admin',
+        lastName: 'User',
+        isApproved: true,
+        isAdmin: true,
+        paymentDone: true
       }
     });
 
@@ -81,25 +55,16 @@ const requireAdmin = (req: any, res: any, next: any) => {
   console.log('🔍 Admin middleware - Session data:', {
     userId: req.session.userId,
     email: req.session.email,
-    isAdmin: req.session.isAdmin,
-    expectedEmail: `${process.env.ADMIN_USERNAME}@rgpv-mates.com`,
-    envUsername: process.env.ADMIN_USERNAME
+    isAdmin: req.session.isAdmin
   });
   
-  // Check if admin session exists
-  if (!req.session.userId || !req.session.isAdmin) {
-    console.log('❌ Admin middleware failed - Missing session data');
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-  
-  // For admin, we don't need to check database - just verify session
-  const adminEmail = `${process.env.ADMIN_USERNAME}@rgpv-mates.com`;
-  if (req.session.email === adminEmail && req.session.isAdmin === true) {
+  // Simple admin check - just verify session
+  if (req.session.userId && req.session.isAdmin === true) {
     console.log('✅ Admin middleware passed - Session verified');
     return next();
   }
   
-  console.log('❌ Admin middleware failed - Email mismatch or not admin');
+  console.log('❌ Admin middleware failed - Not admin');
   return res.status(403).json({ error: 'Admin access required' });
 };
 
@@ -109,13 +74,10 @@ router.get('/check-session', (req, res) => {
     userId: req.session.userId,
     isAdmin: req.session.isAdmin,
     email: req.session.email,
-    expectedEmail: `${process.env.ADMIN_USERNAME}@rgpv-mates.com`,
-    envUsername: process.env.ADMIN_USERNAME,
     sessionKeys: Object.keys(req.session)
   });
   
-  const adminEmail = `${process.env.ADMIN_USERNAME}@rgpv-mates.com`;
-  if (!req.session.userId || !req.session.isAdmin || req.session.email !== adminEmail) {
+  if (!req.session.userId || !req.session.isAdmin) {
     console.log('❌ Admin session check failed - Invalid session');
     return res.status(401).json({ error: 'Admin session invalid' });
   }
@@ -134,34 +96,45 @@ router.get('/check-session', (req, res) => {
   });
 });
 
+// Admin logout endpoint (no middleware required)
+router.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Admin logout error:', err);
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+    console.log('✅ Admin logged out successfully');
+    res.json({ message: 'Admin logged out successfully' });
+  });
+});
+
 // Apply admin middleware to all routes
 router.use(requireAdmin);
 
 // Get admin statistics
 router.get('/stats', async (req, res) => {
   try {
-    // Get total registrations (all users except admin)
-    const adminEmail = `${process.env.ADMIN_USERNAME}@rgpv-mates.com`;
-    const totalRegistrations = await db.select().from(users).where(not(eq(users.email, adminEmail)));
+    // Get total registrations (all users)
+    const totalRegistrations = await db.select().from(users);
     
-    // Get new registrations pending ID verification (not approved, except admin)
+    // Get new registrations pending ID verification (not approved)
     const pendingVerification = await db.select().from(users).where(
-      and(eq(users.isApproved, false), not(eq(users.email, adminEmail)))
+      eq(users.isApproved, false)
     );
     
-    // Get active users (approved and not suspended, except admin)
+    // Get active users (approved and not suspended)
     const activeUsers = await db.select().from(users).where(
-      and(eq(users.isApproved, true), eq(users.isSuspended, false), not(eq(users.email, adminEmail)))
+      and(eq(users.isApproved, true), eq(users.isSuspended, false))
     );
     
-    // Get suspended users (except admin)
+    // Get suspended users
     const suspendedUsers = await db.select().from(users).where(
-      and(eq(users.isSuspended, true), not(eq(users.email, adminEmail)))
+      eq(users.isSuspended, true)
     );
     
-    // Get premium users (payment done, except admin)
+    // Get premium users (payment done)
     const premiumUsers = await db.select().from(users).where(
-      and(eq(users.paymentDone, true), not(eq(users.email, adminEmail)))
+      eq(users.paymentDone, true)
     );
     
     // Calculate total earnings (₹99 per premium user)
@@ -255,7 +228,7 @@ router.put('/suspend/:userId', async (req, res) => {
   }
 });
 
-// Get all users (excluding admin user)
+// Get all users
 router.get('/users', async (req, res) => {
   try {
     const allUsers = await db.select({
@@ -264,7 +237,7 @@ router.get('/users', async (req, res) => {
       firstName: users.firstName,
       lastName: users.lastName,
       age: users.age,
-      gender: users.gender, // Added gender
+      gender: users.gender,
       college: users.college,
       branch: users.branch,
       graduationYear: users.graduationYear,
@@ -275,7 +248,6 @@ router.get('/users', async (req, res) => {
       createdAt: users.createdAt,
     })
     .from(users)
-    .where(not(eq(users.email, `${process.env.ADMIN_USERNAME}@rgpv-mates.com`))) // Exclude admin user
     .orderBy(desc(users.createdAt));
 
     res.json(allUsers);
