@@ -10,13 +10,21 @@ router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    console.log('🔍 Admin login attempt:', { username, password });
+    console.log('🔍 Environment variables:', { 
+      ADMIN_USERNAME: process.env.ADMIN_USERNAME, 
+      ADMIN_PWD: process.env.ADMIN_PWD 
+    });
+
     // Check if username matches ADMIN_USERNAME from environment
     if (username !== process.env.ADMIN_USERNAME) {
+      console.log('❌ Username mismatch:', { provided: username, expected: process.env.ADMIN_USERNAME });
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
     // Check if password matches ADMIN_PWD from environment
     if (password !== process.env.ADMIN_PWD) {
+      console.log('❌ Password mismatch:', { provided: password, expected: process.env.ADMIN_PWD });
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
@@ -105,6 +113,18 @@ router.post('/logout', (req, res) => {
     }
     console.log('✅ Admin logged out successfully');
     res.json({ message: 'Admin logged out successfully' });
+  });
+});
+
+// Test endpoint to verify admin routes are working (no middleware required)
+router.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Admin test endpoint working',
+    timestamp: new Date().toISOString(),
+    env: {
+      ADMIN_USERNAME: process.env.ADMIN_USERNAME ? 'Set' : 'Not Set',
+      ADMIN_PWD: process.env.ADMIN_PWD ? 'Set' : 'Not Set'
+    }
   });
 });
 

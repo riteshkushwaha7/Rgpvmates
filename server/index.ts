@@ -9,6 +9,15 @@ import { db } from './db.js';
 import { routes } from './routes.js';
 import { setupWebSocket } from './websocket.js';
 
+// Extend session interface to include custom properties
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+    email?: string;
+    isAdmin?: boolean;
+  }
+}
+
 dotenv.config();
 
 const app = express();
