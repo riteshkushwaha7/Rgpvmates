@@ -28,41 +28,24 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
-    // Set admin session directly (no database user needed)
-    req.session.userId = 'ADMIN_' + Date.now();
-    req.session.email = username;
-    req.session.isAdmin = true;
+    console.log('🔐 Admin login successful - No session needed');
     
-    console.log('🔐 Admin login - Session set:', {
-      userId: req.session.userId,
-      email: req.session.email,
-      isAdmin: req.session.isAdmin,
-      sessionId: req.sessionID
-    });
-
-    // Force session save
-    req.session.save((err) => {
-      if (err) {
-        console.error('❌ Session save error:', err);
-        return res.status(500).json({ error: 'Failed to save session' });
-      }
-      
-      console.log('✅ Session saved successfully');
-      
-      res.json({
-        message: 'Admin login successful - Session created',
-        user: {
-          id: req.session.userId,
-          email: req.session.email,
-          firstName: 'Admin',
-          lastName: 'User',
-          isApproved: true,
-          isAdmin: true,
-          paymentDone: true
-        },
-        sessionId: req.sessionID,
-        note: 'Session-based authentication active'
-      });
+    res.json({
+      message: 'Admin login successful - Use these headers for admin API calls',
+      user: {
+        id: 'ADMIN_' + Date.now(),
+        email: username,
+        firstName: 'Admin',
+        lastName: 'User',
+        isApproved: true,
+        isAdmin: true,
+        paymentDone: true
+      },
+      headers: {
+        'x-admin-username': process.env.ADMIN_USERNAME,
+        'x-admin-password': process.env.ADMIN_PWD
+      },
+      note: 'Include these headers in all admin API calls'
     });
 
   } catch (error) {
@@ -71,72 +54,26 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin middleware - SECURE SESSION + HEADER FALLBACK
+// Admin middleware - PURE HEADER AUTHENTICATION (SIMPLE & SECURE)
 const requireAdmin = (req: any, res: any, next: any) => {
-  // First, check if admin session exists
-  if (req.session && req.session.isAdmin && req.session.userId) {
-    console.log('✅ Admin middleware passed - Valid session');
-    return next();
-  }
-  
-  // Fallback: Check if admin credentials are provided in headers (for API access)
   const adminUsername = req.headers['x-admin-username'];
   const adminPassword = req.headers['x-admin-password'];
   
-  if (adminUsername && adminPassword) {
-    console.log('🔍 Admin middleware - Header fallback check');
-    
-    // Verify against environment variables
-    if (adminUsername === process.env.ADMIN_USERNAME && 
-        adminPassword === process.env.ADMIN_PWD) {
-      console.log('✅ Admin middleware passed - Header credentials verified');
-      return next();
-    }
+  console.log('🔍 Admin middleware - Header check:', { 
+    adminUsername: adminUsername ? 'Provided' : 'Missing',
+    adminPassword: adminPassword ? 'Provided' : 'Missing'
+  });
+  
+  // Simple admin check - verify against environment variables
+  if (adminUsername === process.env.ADMIN_USERNAME && 
+      adminPassword === process.env.ADMIN_PWD) {
+    console.log('✅ Admin middleware passed - Credentials verified');
+    return next();
   }
   
-  console.log('❌ Admin middleware failed - No valid session or credentials');
+  console.log('❌ Admin middleware failed - Invalid credentials');
   return res.status(403).json({ error: 'Admin access required' });
 };
-
-// Admin session check endpoint (no middleware required)
-router.get('/check-session', (req, res) => {
-  console.log('🔍 Admin session check - Full session data:', {
-    userId: req.session.userId,
-    isAdmin: req.session.isAdmin,
-    email: req.session.email,
-    sessionKeys: Object.keys(req.session)
-  });
-  
-  if (!req.session.userId || !req.session.isAdmin) {
-    console.log('❌ Admin session check failed - Invalid session');
-    return res.status(401).json({ error: 'Admin session invalid' });
-  }
-  
-  console.log('✅ Admin session check passed - Session valid');
-  res.json({
-    user: {
-      id: req.session.userId,
-      email: req.session.email,
-      firstName: 'Admin',
-      lastName: 'User',
-      isApproved: true,
-      isAdmin: true,
-      paymentDone: true
-    }
-  });
-});
-
-// Admin logout endpoint (no middleware required)
-router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Admin logout error:', err);
-      return res.status(500).json({ error: 'Logout failed' });
-    }
-    console.log('✅ Admin logged out successfully');
-    res.json({ message: 'Admin logged out successfully' });
-  });
-});
 
 // Test endpoint to verify admin routes are working (no middleware required)
 router.get('/test', (req, res) => {
@@ -160,41 +97,6 @@ router.get('/credentials-test', (req, res) => {
     },
     usage: 'Send admin credentials in headers: x-admin-username and x-admin-password',
     timestamp: new Date().toISOString()
-  });
-});
-
-// Simple session test endpoint (no middleware required)
-router.get('/session-test', (req, res) => {
-  // Set a test admin session
-  req.session.userId = 'TEST_ADMIN_' + Date.now();
-  req.session.email = 'test@admin.com';
-  req.session.isAdmin = true;
-  
-  console.log('🔧 Test admin session set:', {
-    userId: req.session.userId,
-    email: req.session.email,
-    isAdmin: req.session.isAdmin
-  });
-  
-  // Force save
-  req.session.save((err) => {
-    if (err) {
-      console.error('❌ Test session save error:', err);
-      return res.status(500).json({ error: 'Test session save failed' });
-    }
-    
-    console.log('✅ Test admin session saved');
-    
-    res.json({
-      message: 'Test admin session created',
-      sessionId: req.sessionID,
-      sessionData: {
-        userId: req.session.userId,
-        email: req.session.email,
-        isAdmin: req.session.isAdmin
-      },
-      timestamp: new Date().toISOString()
-    });
   });
 });
 
