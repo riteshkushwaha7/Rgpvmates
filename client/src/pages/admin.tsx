@@ -142,9 +142,9 @@ export default function Admin() {
     try {
       setPendingUsersLoading(true);
       const response = await fetch(`${API_URL}/api/admin/pending-approvals`, {
+        credentials: 'include', // Use session cookies
         headers: {
           'Content-Type': 'application/json',
-          ...getAdminHeaders()
         }
       });
 
@@ -152,7 +152,20 @@ export default function Admin() {
         const data = await response.json();
         setPendingUsers(data);
       } else {
-        toast.error('Failed to fetch pending users');
+        // Fallback to header-based auth if session fails
+        const fallbackResponse = await fetch(`${API_URL}/api/admin/pending-approvals`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAdminHeaders()
+          }
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          setPendingUsers(fallbackData);
+        } else {
+          toast.error('Failed to fetch pending users');
+        }
       }
     } catch (error) {
       console.error('Error fetching pending users:', error);
@@ -166,9 +179,9 @@ export default function Admin() {
     try {
       setUsersLoading(true);
       const response = await fetch(`${API_URL}/api/admin/users`, {
+        credentials: 'include', // Use session cookies
         headers: {
           'Content-Type': 'application/json',
-          ...getAdminHeaders()
         }
       });
 
@@ -176,7 +189,20 @@ export default function Admin() {
         const data = await response.json();
         setAllUsers(data);
       } else {
-        toast.error('Failed to fetch users');
+        // Fallback to header-based auth if session fails
+        const fallbackResponse = await fetch(`${API_URL}/api/admin/users`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAdminHeaders()
+          }
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          setAllUsers(fallbackData);
+        } else {
+          toast.error('Failed to fetch users');
+        }
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -190,9 +216,9 @@ export default function Admin() {
     try {
       setContactsLoading(true);
       const response = await fetch(`${API_URL}/api/admin/contact-submissions`, {
+        credentials: 'include', // Use session cookies
         headers: {
           'Content-Type': 'application/json',
-          ...getAdminHeaders()
         }
       });
 
@@ -200,7 +226,20 @@ export default function Admin() {
         const data = await response.json();
         setContactSubmissions(data);
       } else {
-        toast.error('Failed to fetch contact submissions');
+        // Fallback to header-based auth if session fails
+        const fallbackResponse = await fetch(`${API_URL}/api/admin/contact-submissions`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAdminHeaders()
+          }
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          setContactSubmissions(fallbackData);
+        } else {
+          toast.error('Failed to fetch contact submissions');
+        }
       }
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
