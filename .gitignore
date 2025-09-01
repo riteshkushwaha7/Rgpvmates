@@ -6,6 +6,7 @@ npm-debug.log*
 dist/
 build/
 server/public/
+client/dist/
 
 # Env files
 .env
