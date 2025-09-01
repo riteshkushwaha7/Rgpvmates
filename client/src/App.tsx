@@ -93,7 +93,7 @@ function App() {
             } />
             <Route path="/matches" element={
               <ProtectedRoute>
-                <Matches />
+                <Matches onChatOpen={(matchId) => window.location.href = `/chat/${matchId}`} />
               </ProtectedRoute>
             } />
             <Route path="/messages" element={
@@ -103,7 +103,7 @@ function App() {
             } />
             <Route path="/chat/:matchId" element={
               <ProtectedRoute>
-                <Chat />
+                <Chat matchId={window.location.pathname.split('/').pop() || ''} onBack={() => window.location.href = '/matches'} />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

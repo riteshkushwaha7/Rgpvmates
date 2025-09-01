@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Shield, Lock, User } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export default function AdminLogin() {
   const [credentials, setCredentials] = useState({
@@ -14,7 +13,6 @@ export default function AdminLogin() {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const { user, adminLogin } = useAuth();
 
   // Redirect if already logged in as admin

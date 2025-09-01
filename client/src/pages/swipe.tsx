@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SwipeCard from "@/components/ui/swipe-card";
 import MatchModal from "@/components/match-modal";
@@ -6,11 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import type { Profile, User } from "../../shared/schema";
-
-type SwipeProfile = Profile & {
-  user?: User;
-};
+import type { SwipeProfile } from "@/types";
 
 export default function Swipe() {
   const [currentIndex, setCurrentIndex] = useState(0);

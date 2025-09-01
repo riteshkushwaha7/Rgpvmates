@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Shield, Users, UserCheck, UserX, DollarSign, Clock, Search, LogOut, Check, X, Eye, EyeOff } from 'lucide-react';
+import { Shield, Users, UserCheck, UserX, DollarSign, Clock, Search, LogOut, Check, X, Eye } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 
@@ -757,7 +757,7 @@ export default function Admin() {
                         })
                         .map((contact) => {
                           const { email, phone } = extractPhoneFromEmail(contact.email);
-                          const { message, imageUrl } = extractImageFromMessage(contact.description || '');
+                          const { imageUrl } = extractImageFromMessage(contact.description || '');
                           
                           return (
                             <tr key={contact.id} className="hover:bg-gray-50">
@@ -1148,10 +1148,10 @@ export default function Admin() {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-3">Message</h4>
                     {(() => {
-                      const { message, imageUrl } = extractImageFromMessage(selectedContact.description || '');
+                                              const { imageUrl } = extractImageFromMessage(selectedContact.description || '');
                       return (
                         <>
-                          <div className="text-gray-900 whitespace-pre-wrap">{message}</div>
+                          <div className="text-gray-900 whitespace-pre-wrap">{selectedContact.description}</div>
                           
                           {imageUrl && (
                             <div className="mt-4">

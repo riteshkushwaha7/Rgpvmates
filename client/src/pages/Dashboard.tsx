@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { 
   Heart, 
@@ -8,16 +8,13 @@ import {
   Settings, 
   LogOut, 
   User,
-  Bell,
   Crown,
   Sparkles
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import BottomNavigation from '../components/BottomNavigation';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [stats, setStats] = useState({
     matches: 0,
     messages: 0,

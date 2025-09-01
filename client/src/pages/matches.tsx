@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Heart, MessageCircle, User } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+
 import toast from 'react-hot-toast';
 import BottomNavigation from '../components/BottomNavigation';
 
@@ -21,13 +21,13 @@ interface Match {
   createdAt: string;
 }
 
-export default function Matches() {
-  const navigate = useNavigate();
-  
-  const handleChatOpen = (matchId: string) => {
-    navigate(`/chat/${matchId}`);
-  };
-  const { user } = useAuth();
+interface MatchesProps {
+  onChatOpen: (matchId: string) => void;
+}
+
+export default function Matches({ onChatOpen }: MatchesProps) {
+
+
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +97,7 @@ export default function Matches() {
           <Card 
             key={match.id}
             className="group cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 animate-fade-in"
-            onClick={() => handleChatOpen(match.id)}
+            onClick={() => onChatOpen(match.id)}
           >
             <CardContent className="p-6">
               <div className="text-center">
@@ -131,7 +131,7 @@ export default function Matches() {
                   className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white transition-all duration-200 group-hover:scale-105"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleChatOpen(match.id);
+                    onChatOpen(match.id);
                   }}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />

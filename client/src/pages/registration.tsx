@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,7 +36,7 @@ export default function Registration() {
     },
   });
 
-  const onSubmit = async (data: RegistrationForm) => {
+  const onSubmit = async () => {
     // In a real app, this would create the account
     // For now, we'll redirect to profile setup
     // Registration data logged

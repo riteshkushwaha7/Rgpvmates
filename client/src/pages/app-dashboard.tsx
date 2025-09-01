@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, User, Settings as SettingsIcon, Menu } from "lucide-react";
+import { Heart, MessageCircle, User, Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Swipe from "./swipe";
@@ -17,7 +16,7 @@ export default function AppDashboard() {
   const [currentSection, setCurrentSection] = useState<AppSection>("swipe");
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const { isAuthenticated, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+
   const { toast } = useToast();
 
   useEffect(() => {

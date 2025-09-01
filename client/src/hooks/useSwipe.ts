@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useSpring } from '@react-spring/web';
 import { useDrag } from '@use-gesture/react';
 
@@ -11,16 +11,14 @@ interface UseSwipeProps {
 export function useSwipe({ onSwipeComplete, onSwipeStart, onSwipeEnd }: UseSwipeProps) {
   const [isDragging, setIsDragging] = useState(false);
   
-  const [{ x, y, rotate, scale }, api] = useSpring(() => ({
+  const [{ x, rotate }, api] = useSpring(() => ({
     x: 0,
-    y: 0,
     rotate: 0,
-    scale: 1,
     config: { tension: 200, friction: 20 }
   }));
 
   const bind = useDrag(
-    ({ active, movement: [mx, my], direction: [xDir], velocity: [vx] }) => {
+    ({ active, movement: [mx], direction: [xDir], velocity: [vx] }) => {
       const trigger = vx > 0.2 || Math.abs(mx) > 100;
       const dir = xDir < 0 ? -1 : 1;
       
@@ -32,7 +30,6 @@ export function useSwipe({ onSwipeComplete, onSwipeStart, onSwipeEnd }: UseSwipe
         api.start({
           x: (200 + window.innerWidth) * dir,
           rotate: mx / 100 + (isRight ? 1 : -1) * 10,
-          scale: 1.1,
           config: { tension: 200, friction: 20 }
         });
         
@@ -50,9 +47,7 @@ export function useSwipe({ onSwipeComplete, onSwipeStart, onSwipeEnd }: UseSwipe
 
       api.start({
         x: active ? mx : 0,
-        y: active ? my : 0,
         rotate: active ? mx / 100 + (mx > 0 ? 1 : -1) * 1 : 0,
-        scale: active ? 1.05 : 1,
         immediate: (name) => active && name === 'x'
       });
     },

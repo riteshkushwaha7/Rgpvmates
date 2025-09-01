@@ -8,9 +8,7 @@ import {
   Settings, 
   LogOut, 
   User,
-  Bell,
   Crown,
-  Sparkles,
   Edit3,
   Camera,
   X,
@@ -40,7 +38,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
+
   const [uploading, setUploading] = useState(false);
   const [stats, setStats] = useState({
     matches: 0,
@@ -69,12 +67,18 @@ const Profile = () => {
       // Use user data from context
       setProfile({
         id: user.id,
+        userId: user.id,
         age: user.age,
-        college: user.college,
-        branch: user.branch,
+        gender: user.gender || 'prefer-not-to-say',
+        branch: user.branch || '',
         graduationYear: user.graduationYear,
         bio: user.bio || '',
-        profilePicture: user.profileImageUrl || ''
+        profilePicture: user.profileImageUrl || '',
+        photos: [],
+        socialHandles: {},
+        verificationStatus: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
     } catch (error) {
       toast.error('Failed to load profile');

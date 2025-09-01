@@ -12,7 +12,7 @@ import {
   AlertTriangle, 
   Lightbulb, 
   Clock, 
-  Upload, 
+
   X,
   Phone,
   Mail,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -28,9 +28,13 @@ interface Match {
   age: number;
 }
 
-const Chat = () => {
-  const { matchId } = useParams<{ matchId: string }>();
-  const navigate = useNavigate();
+interface ChatProps {
+  matchId: string | null;
+  onBack: () => void;
+}
+
+const Chat = ({ matchId, onBack }: ChatProps) => {
+
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [match, setMatch] = useState<Match | null>(null);
@@ -77,7 +81,7 @@ const Chat = () => {
           setMatch(currentMatch);
         } else {
           toast.error('Match not found');
-          navigate('/matches');
+          onBack();
         }
       }
     } catch (error) {
@@ -266,7 +270,7 @@ const Chat = () => {
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Match not found</p>
-          <Button onClick={() => navigate('/matches')} className="mt-4">
+          <Button onClick={onBack} className="mt-4">
             Back to Matches
           </Button>
         </div>
@@ -283,7 +287,7 @@ const Chat = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/matches')}
+              onClick={onBack}
               className="p-2"
             >
               <ArrowLeft className="w-5 h-5" />

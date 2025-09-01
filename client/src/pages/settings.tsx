@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { 
   ArrowLeft, 
@@ -7,19 +7,15 @@ import {
   Shield, 
   Bell, 
   Lock, 
-  Trash2,
   LogOut,
   Settings as SettingsIcon,
   Heart,
   Crown
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import BottomNavigation from '../components/BottomNavigation';
 
 const Settings = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
     try {

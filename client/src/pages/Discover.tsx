@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { Heart, X, ArrowLeft, User, MessageCircle, Bell } from 'lucide-react';
+
+import { Heart, X, ArrowLeft, User, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BottomNavigation from '../components/BottomNavigation';
 
@@ -22,7 +22,6 @@ interface Profile {
 }
 
 const Discover = () => {
-  const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
