@@ -21,6 +21,20 @@ router.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Session test endpoint
+router.get('/session-test', (req, res) => {
+  res.json({
+    sessionId: req.sessionID,
+    sessionData: {
+      userId: req.session.userId,
+      email: req.session.email,
+      isAdmin: req.session.isAdmin
+    },
+    sessionKeys: Object.keys(req.session),
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Mount route modules
 router.use('/auth', authRoutes);
 router.use('/profiles', profileRoutes);

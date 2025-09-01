@@ -4,7 +4,8 @@ import session from 'express-session';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
-import MemoryStore from 'memorystore';
+import pg from 'pg';
+import connectPgSimple from 'connect-pg-simple';
 import { db } from './db.js';
 import { routes } from './routes.js';
 import { setupWebSocket } from './websocket.js';
@@ -42,22 +43,31 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Session configuration - fixed memorystore usage
-const MemoryStoreSession = MemoryStore(session);
+// Session configuration - using PostgreSQL store for production
+const PgSession = connectPgSimple(session);
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: true, // Changed to true for better session persistence
-  saveUninitialized: true, // Changed to true for admin sessions
+  resave: true,
+  saveUninitialized: true,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Added for better cross-origin support
+    sameSite: 'lax',
   },
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000, // prune expired entries every 24h
+  store: new PgSession({
+    conObject: {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    },
+    tableName: 'sessions', // This table will be created automatically
+    createTableIfMissing: true,
   }),
 });
+
+console.log('🔧 Session store configured with PostgreSQL');
+console.log('🔧 DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not Set');
+console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
 
 app.use(sessionMiddleware);
 

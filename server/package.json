@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",
-
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx index.ts",
     "build": "esbuild index.ts --platform=node --packages=external --bundle --format=esm --target=es2020 --outdir=dist --main-fields=module,main",
@@ -28,7 +27,6 @@
     "form-data": "^4.0.4",
     "jsonwebtoken": "^9.0.2",
     "memoizee": "^0.4.17",
-    "memorystore": "^1.6.7",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^5.1.5",
     "node-fetch": "^3.3.2",
