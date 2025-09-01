@@ -49,6 +49,13 @@ router.post('/login', async (req, res) => {
     req.session.userId = adminUser[0].id;
     req.session.email = adminUser[0].email;
     req.session.isAdmin = true;
+    
+    console.log('🔐 Admin login - Session set:', {
+      userId: req.session.userId,
+      email: req.session.email,
+      isAdmin: req.session.isAdmin,
+      expectedEmail: `${process.env.ADMIN_USERNAME}@rgpv-mates.com`
+    });
 
     res.json({
       message: 'Admin login successful',
@@ -71,29 +78,49 @@ router.post('/login', async (req, res) => {
 
 // Admin middleware
 const requireAdmin = (req: any, res: any, next: any) => {
+  console.log('🔍 Admin middleware - Session data:', {
+    userId: req.session.userId,
+    email: req.session.email,
+    isAdmin: req.session.isAdmin,
+    expectedEmail: `${process.env.ADMIN_USERNAME}@rgpv-mates.com`,
+    envUsername: process.env.ADMIN_USERNAME
+  });
+  
   // Check if admin session exists
   if (!req.session.userId || !req.session.isAdmin) {
+    console.log('❌ Admin middleware failed - Missing session data');
     return res.status(403).json({ error: 'Admin access required' });
   }
   
   // For admin, we don't need to check database - just verify session
   const adminEmail = `${process.env.ADMIN_USERNAME}@rgpv-mates.com`;
   if (req.session.email === adminEmail && req.session.isAdmin === true) {
+    console.log('✅ Admin middleware passed - Session verified');
     return next();
   }
   
+  console.log('❌ Admin middleware failed - Email mismatch or not admin');
   return res.status(403).json({ error: 'Admin access required' });
 };
 
 // Admin session check endpoint (no middleware required)
 router.get('/check-session', (req, res) => {
-  console.log('Admin session check - userId:', req.session.userId, 'isAdmin:', req.session.isAdmin, 'email:', req.session.email);
+  console.log('🔍 Admin session check - Full session data:', {
+    userId: req.session.userId,
+    isAdmin: req.session.isAdmin,
+    email: req.session.email,
+    expectedEmail: `${process.env.ADMIN_USERNAME}@rgpv-mates.com`,
+    envUsername: process.env.ADMIN_USERNAME,
+    sessionKeys: Object.keys(req.session)
+  });
   
   const adminEmail = `${process.env.ADMIN_USERNAME}@rgpv-mates.com`;
   if (!req.session.userId || !req.session.isAdmin || req.session.email !== adminEmail) {
+    console.log('❌ Admin session check failed - Invalid session');
     return res.status(401).json({ error: 'Admin session invalid' });
   }
   
+  console.log('✅ Admin session check passed - Session valid');
   res.json({
     user: {
       id: req.session.userId,
