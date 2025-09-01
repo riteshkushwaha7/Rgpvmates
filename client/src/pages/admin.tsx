@@ -78,6 +78,23 @@ export default function Admin() {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+  // Get admin headers for API calls
+  const getAdminHeaders = () => {
+    const storedCreds = localStorage.getItem('adminCredentials');
+    if (storedCreds) {
+      try {
+        const creds = JSON.parse(storedCreds);
+        return {
+          'x-admin-username': creds.username,
+          'x-admin-password': creds.password
+        };
+      } catch (error) {
+        console.error('Failed to parse stored credentials');
+      }
+    }
+    return {};
+  };
+
   useEffect(() => {
     fetchStats();
     fetchPendingUsers();
@@ -88,14 +105,30 @@ export default function Admin() {
   const fetchStats = async () => {
     try {
       const response = await fetch(`${API_URL}/api/admin/stats`, {
-        credentials: 'include'
+        credentials: 'include', // Use session cookies
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
       if (response.ok) {
         const data = await response.json();
         setStats(data);
       } else {
-        toast.error('Failed to fetch admin statistics');
+        // Fallback to header-based auth if session fails
+        const fallbackResponse = await fetch(`${API_URL}/api/admin/stats`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAdminHeaders()
+          }
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          setStats(fallbackData);
+        } else {
+          toast.error('Failed to fetch admin statistics');
+        }
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -109,7 +142,10 @@ export default function Admin() {
     try {
       setPendingUsersLoading(true);
       const response = await fetch(`${API_URL}/api/admin/pending-approvals`, {
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminHeaders()
+        }
       });
 
       if (response.ok) {
@@ -130,7 +166,10 @@ export default function Admin() {
     try {
       setUsersLoading(true);
       const response = await fetch(`${API_URL}/api/admin/users`, {
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminHeaders()
+        }
       });
 
       if (response.ok) {
@@ -150,8 +189,11 @@ export default function Admin() {
   const fetchContactSubmissions = async () => {
     try {
       setContactsLoading(true);
-      const response = await fetch(`${API_URL}/api/contact`, {
-        credentials: 'include'
+      const response = await fetch(`${API_URL}/api/admin/contact-submissions`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminHeaders()
+        }
       });
 
       if (response.ok) {
@@ -170,12 +212,12 @@ export default function Admin() {
 
   const handleResolveContact = async (contactId: string, isResolved: boolean) => {
     try {
-      const response = await fetch(`${API_URL}/api/contact/${contactId}`, {
+      const response = await fetch(`${API_URL}/api/admin/contact-submissions/${contactId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAdminHeaders()
         },
-        credentials: 'include',
         body: JSON.stringify({ isResolved }),
       });
 
@@ -222,8 +264,8 @@ export default function Admin() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAdminHeaders()
         },
-        credentials: 'include',
         body: JSON.stringify({ approved }),
       });
 
@@ -247,8 +289,8 @@ export default function Admin() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAdminHeaders()
         },
-        credentials: 'include',
         body: JSON.stringify({ suspended }),
       });
 
@@ -269,7 +311,10 @@ export default function Admin() {
     try {
       const response = await fetch(`${API_URL}/api/admin/delete/${userId}`, {
         method: 'DELETE',
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminHeaders()
+        }
       });
 
       if (response.ok) {
@@ -287,11 +332,7 @@ export default function Admin() {
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    logout();
   };
 
   if (loading) {

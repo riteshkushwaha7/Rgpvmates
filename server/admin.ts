@@ -50,7 +50,7 @@ router.post('/login', async (req, res) => {
       console.log('✅ Session saved successfully');
       
       res.json({
-        message: 'Admin login successful',
+        message: 'Admin login successful - Session created',
         user: {
           id: req.session.userId,
           email: req.session.email,
@@ -59,7 +59,9 @@ router.post('/login', async (req, res) => {
           isApproved: true,
           isAdmin: true,
           paymentDone: true
-        }
+        },
+        sessionId: req.sessionID,
+        note: 'Session-based authentication active'
       });
     });
 
@@ -69,22 +71,30 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin middleware - SIMPLE AND RELIABLE
+// Admin middleware - SECURE SESSION + HEADER FALLBACK
 const requireAdmin = (req: any, res: any, next: any) => {
-  console.log('🔍 Admin middleware - Session data:', {
-    userId: req.session?.userId,
-    email: req.session?.email,
-    isAdmin: req.session?.isAdmin,
-    sessionId: req.sessionID
-  });
-  
-  // Simple admin check - just verify session
-  if (req.session && req.session.userId && req.session.isAdmin === true) {
-    console.log('✅ Admin middleware passed - Session verified');
+  // First, check if admin session exists
+  if (req.session && req.session.isAdmin && req.session.userId) {
+    console.log('✅ Admin middleware passed - Valid session');
     return next();
   }
   
-  console.log('❌ Admin middleware failed - Not admin');
+  // Fallback: Check if admin credentials are provided in headers (for API access)
+  const adminUsername = req.headers['x-admin-username'];
+  const adminPassword = req.headers['x-admin-password'];
+  
+  if (adminUsername && adminPassword) {
+    console.log('🔍 Admin middleware - Header fallback check');
+    
+    // Verify against environment variables
+    if (adminUsername === process.env.ADMIN_USERNAME && 
+        adminPassword === process.env.ADMIN_PWD) {
+      console.log('✅ Admin middleware passed - Header credentials verified');
+      return next();
+    }
+  }
+  
+  console.log('❌ Admin middleware failed - No valid session or credentials');
   return res.status(403).json({ error: 'Admin access required' });
 };
 

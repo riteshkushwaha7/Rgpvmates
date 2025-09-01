@@ -66,16 +66,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuth = async () => {
     try {
-      // First try admin session check
-      const adminResponse = await fetch(`${API_URL}/api/admin/check-session`, {
-        credentials: 'include',
-      });
+      // Check if admin credentials are stored
+      const storedAdminCreds = localStorage.getItem('adminCredentials');
+      if (storedAdminCreds) {
+        try {
+          const adminCredentials = JSON.parse(storedAdminCreds);
+          const adminResponse = await fetch(`${API_URL}/api/admin/credentials-test`, {
+            headers: {
+              'x-admin-username': adminCredentials.username,
+              'x-admin-password': adminCredentials.password
+            }
+          });
 
-      if (adminResponse.ok) {
-        const adminData = await adminResponse.json();
-        setUser(adminData.user);
-        setLoading(false);
-        return;
+          if (adminResponse.ok) {
+            // Admin credentials are valid, set admin user
+            setUser({
+              id: 'ADMIN',
+              email: adminCredentials.username,
+              firstName: 'Admin',
+              lastName: 'User',
+              isApproved: true,
+              isAdmin: true,
+              paymentDone: true
+            });
+            setLoading(false);
+            return;
+          } else {
+            // Admin credentials are invalid, remove them
+            localStorage.removeItem('adminCredentials');
+          }
+        } catch (error) {
+          localStorage.removeItem('adminCredentials');
+        }
       }
 
       // If not admin, try regular user session check
@@ -142,13 +164,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        credentials: 'include', // Enable session cookies
         body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // Store admin credentials as fallback for API access
+        const adminCredentials = { username, password };
+        localStorage.setItem('adminCredentials', JSON.stringify(adminCredentials));
+        
         setUser(data.user);
         toast.success('Admin login successful!');
         navigate('/admin');
@@ -194,6 +220,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
+      // Clear admin credentials if they exist
+      localStorage.removeItem('adminCredentials');
+      
+      // Try regular logout
       await fetch(`${API_URL}/api/logout`, {
         method: 'POST',
         credentials: 'include',
