@@ -69,16 +69,17 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin middleware
+// Admin middleware - SIMPLE AND RELIABLE
 const requireAdmin = (req: any, res: any, next: any) => {
   console.log('🔍 Admin middleware - Session data:', {
-    userId: req.session.userId,
-    email: req.session.email,
-    isAdmin: req.session.isAdmin
+    userId: req.session?.userId,
+    email: req.session?.email,
+    isAdmin: req.session?.isAdmin,
+    sessionId: req.sessionID
   });
   
   // Simple admin check - just verify session
-  if (req.session.userId && req.session.isAdmin === true) {
+  if (req.session && req.session.userId && req.session.isAdmin === true) {
     console.log('✅ Admin middleware passed - Session verified');
     return next();
   }
@@ -136,6 +137,19 @@ router.get('/test', (req, res) => {
       ADMIN_USERNAME: process.env.ADMIN_USERNAME ? 'Set' : 'Not Set',
       ADMIN_PWD: process.env.ADMIN_PWD ? 'Set' : 'Not Set'
     }
+  });
+});
+
+// Simple admin credentials test endpoint (no middleware required)
+router.get('/credentials-test', (req, res) => {
+  res.json({
+    message: 'Admin credentials test endpoint',
+    env: {
+      ADMIN_USERNAME: process.env.ADMIN_USERNAME ? 'Set' : 'Not Set',
+      ADMIN_PWD: process.env.ADMIN_PWD ? 'Set' : 'Not Set'
+    },
+    usage: 'Send admin credentials in headers: x-admin-username and x-admin-password',
+    timestamp: new Date().toISOString()
   });
 });
 

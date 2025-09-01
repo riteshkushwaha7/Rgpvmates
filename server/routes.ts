@@ -42,6 +42,32 @@ router.get('/db-health', async (req, res) => {
   }
 });
 
+// Simple test endpoint to verify server is working
+router.get('/test', async (req, res) => {
+  try {
+    const { users } = await import('./shared/schema.js');
+    const userCount = await db.select().from(users);
+    
+    res.json({
+      message: 'Server is working!',
+      database: 'Connected',
+      userCount: userCount.length,
+      timestamp: new Date().toISOString(),
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        DATABASE_URL: process.env.DATABASE_URL ? 'Set' : 'Not Set'
+      }
+    });
+  } catch (error) {
+    console.error('Test endpoint error:', error);
+    res.status(500).json({
+      message: 'Server has errors',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Session test endpoint
 router.get('/session-test', (req, res) => {
   // Test setting a session value
