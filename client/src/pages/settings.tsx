@@ -59,7 +59,7 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -79,30 +79,26 @@ const Settings = () => {
         <div className="grid md:grid-cols-3 gap-8">
           {/* Settings Menu */}
           <div className="md:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Account Settings</h2>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">Account Settings</h2>
               
               <div className="space-y-2">
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-pink-50 border border-pink-200">
-                  <User className="w-5 h-5 text-pink-500" />
+                <div className="p-3 rounded bg-pink-50 border border-pink-200">
                   <span className="text-gray-700 font-medium">Profile</span>
                 </div>
                 
                 <Link
                   to="/safety"
-                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="block p-3 rounded hover:bg-gray-50 transition-colors"
                 >
-                  <Shield className="w-5 h-5 text-gray-500" />
                   <span className="text-gray-700">Safety & Privacy</span>
                 </Link>
                 
-                <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Bell className="w-5 h-5 text-gray-500" />
+                <div className="p-3 rounded hover:bg-gray-50 transition-colors">
                   <span className="text-gray-700">Notifications</span>
                 </div>
                 
-                <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Lock className="w-5 h-5 text-gray-500" />
+                <div className="p-3 rounded hover:bg-gray-50 transition-colors">
                   <span className="text-gray-700">Security</span>
                 </div>
               </div>
@@ -112,11 +108,8 @@ const Settings = () => {
           {/* Settings Content */}
           <div className="md:col-span-2 space-y-6">
             {/* Profile Settings */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <User className="w-6 h-6 text-pink-500" />
-                <h3 className="text-xl font-semibold text-gray-800">Profile Settings</h3>
-              </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Profile Settings</h3>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -136,7 +129,7 @@ const Settings = () => {
                   <div>
                     <h4 className="font-medium text-gray-800">Account Status</h4>
                     <p className="text-sm text-gray-600">
-                      {user.isApproved ? '✅ Approved' : '⏳ Pending Approval'}
+                      {user.isApproved ? 'Approved' : 'Pending Approval'}
                     </p>
                   </div>
                   <div className="text-sm text-gray-500">
@@ -152,14 +145,13 @@ const Settings = () => {
                     </p>
                   </div>
                   {user.paymentDone ? (
-                    <div className="flex items-center space-x-1 text-green-600">
-                      <Crown className="w-4 h-4" />
+                    <div className="text-green-600">
                       <span className="text-sm font-medium">Premium</span>
                     </div>
                   ) : (
                     <Link
                       to="/payment"
-                      className="bg-gradient-to-r from-pink-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-pink-600 hover:to-orange-600 transition-colors"
+                      className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 transition-colors"
                     >
                       Upgrade
                     </Link>
@@ -169,55 +161,44 @@ const Settings = () => {
             </div>
 
             {/* Safety & Privacy */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <Shield className="w-6 h-6 text-pink-500" />
-                <h3 className="text-xl font-semibold text-gray-800">Safety & Privacy</h3>
-              </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Safety & Privacy</h3>
               
               <div className="space-y-4">
                 <Link
                   to="/safety"
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div>
                     <h4 className="font-medium text-gray-800">Safety Guidelines</h4>
                     <p className="text-sm text-gray-600">Learn about safe dating practices</p>
                   </div>
-                  <ArrowLeft className="w-4 h-4 text-gray-400 rotate-180" />
                 </Link>
                 
                 <Link
                   to="/contact"
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div>
                     <h4 className="font-medium text-gray-800">Report Issues</h4>
                     <p className="text-sm text-gray-600">Report inappropriate behavior or technical issues</p>
                   </div>
-                  <ArrowLeft className="w-4 h-4 text-gray-400 rotate-180" />
                 </Link>
               </div>
             </div>
 
             {/* Account Actions */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <SettingsIcon className="w-6 h-6 text-pink-500" />
-                <h3 className="text-xl font-semibold text-gray-800">Account Actions</h3>
-              </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Actions</h3>
               
               <div className="space-y-4">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
                 >
-                  <div className="flex items-center space-x-3">
-                    <LogOut className="w-5 h-5 text-gray-500" />
-                    <div>
-                      <h4 className="font-medium text-gray-800">Logout</h4>
-                      <p className="text-sm text-gray-600">Sign out of your account</p>
-                    </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800">Logout</h4>
+                    <p className="text-sm text-gray-600">Sign out of your account</p>
                   </div>
                 </button>
                 
@@ -240,11 +221,8 @@ const Settings = () => {
             </div>
 
             {/* App Information */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <Heart className="w-6 h-6 text-pink-500" />
-                <h3 className="text-xl font-semibold text-gray-800">About RGPV Mates</h3>
-              </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">About RGPV Mates</h3>
               
               <div className="space-y-4 text-sm text-gray-600">
                 <p>
@@ -252,7 +230,7 @@ const Settings = () => {
                 </p>
                 <p>
                   Version: 1.0.0<br />
-                  Built with ❤️ for RGPV students
+                  Built for RGPV students
                 </p>
                 <div className="pt-4 border-t border-gray-200">
                   <p className="text-xs text-gray-500">

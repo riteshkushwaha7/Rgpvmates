@@ -164,7 +164,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Enable session cookies
         body: JSON.stringify({ username, password }),
       });
 

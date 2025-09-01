@@ -193,7 +193,7 @@ export default function Contact() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -210,10 +210,9 @@ export default function Contact() {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">📞</div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Get in Touch</h2>
-          <p className="text-lg text-gray-600">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Get in Touch</h2>
+          <p className="text-gray-600">
             We're here to help! Send us a message and we'll respond as soon as possible.
           </p>
         </div>
@@ -223,10 +222,7 @@ export default function Contact() {
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Send className="w-5 h-5 text-pink-500" />
-                  <span>Send us a Message</span>
-                </CardTitle>
+                <CardTitle>Send us a Message</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -246,36 +242,28 @@ export default function Contact() {
                     
                     <div>
                       <Label htmlFor="email">Email Address *</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => handleInputChange('email', e.target.value)}
-                          placeholder="your.email@domain.com"
-                          className="pl-10"
-                          required
-                        />
-                      </div>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        placeholder="your.email@domain.com"
+                        required
+                      />
                     </div>
                   </div>
 
                   {/* Phone Number */}
                   <div>
                     <Label htmlFor="phone">Phone Number *</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="+91 XXXXX XXXXX"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="+91 XXXXX XXXXX"
+                      required
+                    />
                   </div>
 
                   {/* Issue Type */}
@@ -288,10 +276,7 @@ export default function Contact() {
                       <SelectContent>
                         {issueTypeOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center space-x-2">
-                              <option.icon className={`w-4 h-4 ${option.color}`} />
-                              <span>{option.label}</span>
-                            </div>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -357,7 +342,6 @@ export default function Contact() {
                             className="hidden"
                           />
                           <label htmlFor="image" className="cursor-pointer">
-                            <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-600 mb-2">Click to upload an image</p>
                             <p className="text-sm text-gray-500">PNG, JPG, GIF up to 5MB</p>
                           </label>
@@ -401,10 +385,7 @@ export default function Contact() {
                         <span>Sending Message...</span>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center space-x-2">
-                        <Send className="w-4 h-4" />
-                        <span>Send Message</span>
-                      </div>
+                      <span>Send Message</span>
                     )}
                   </Button>
                 </form>
@@ -420,20 +401,14 @@ export default function Contact() {
                 <CardTitle>Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <Mail className="w-5 h-5 text-pink-500" />
-                  <div>
-                    <p className="font-medium">Email</p>
-                    <p className="text-sm text-gray-600">support@rgpvmates.com</p>
-                  </div>
+                <div>
+                  <p className="font-medium">Email</p>
+                  <p className="text-sm text-gray-600">**********</p>
                 </div>
                 
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-pink-500" />
-                  <div>
-                    <p className="font-medium">Phone</p>
-                    <p className="text-sm text-gray-600">+91 XXXXX XXXXX</p>
-                  </div>
+                <div>
+                  <p className="font-medium">Phone</p>
+                  <p className="text-sm text-gray-600">+91 XXXXX XXXXX</p>
                 </div>
               </CardContent>
             </Card>
@@ -441,10 +416,7 @@ export default function Contact() {
             {/* Response Time */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-pink-500" />
-                  <span>Response Time</span>
-                </CardTitle>
+                <CardTitle>Response Time</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 text-sm">

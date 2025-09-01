@@ -9,20 +9,20 @@ export default function SafetyGuidelines() {
   return (
     <div className="min-h-screen bg-rgpv-bg py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="text-5xl mb-4">🛡️</div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Safety & Guidelines</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Your safety is our priority. Please read and follow these guidelines for a positive experience.
+        <div className="text-center mb-8">
+          <Shield className="w-12 h-12 mx-auto mb-4 text-pink-500" />
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Safety & Guidelines</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Your safety is our priority. Please read and follow these guidelines.
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Community Guidelines */}
-          <Card className="bg-white rounded-2xl shadow-lg">
-            <CardContent className="p-8">
-              <Users className="text-3xl mb-4 text-rgpv-pink" size={48} />
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Community Guidelines</h2>
+          <Card className="bg-white rounded-lg shadow">
+            <CardContent className="p-6">
+              <Users className="w-8 h-8 mb-3 text-pink-500" />
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Community Guidelines</h2>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mt-0.5">
@@ -56,10 +56,10 @@ export default function SafetyGuidelines() {
           </Card>
           
           {/* Safety Tips */}
-          <Card className="bg-white rounded-2xl shadow-lg">
-            <CardContent className="p-8">
-              <Lightbulb className="text-3xl mb-4 text-blue-500" size={48} />
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Safety Tips</h2>
+          <Card className="bg-white rounded-lg shadow">
+            <CardContent className="p-6">
+              <Lightbulb className="w-8 h-8 mb-3 text-blue-500" />
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Safety Tips</h2>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <Shield className="text-blue-500 mt-1" size={20} />
@@ -88,10 +88,10 @@ export default function SafetyGuidelines() {
         </div>
         
         {/* Prohibited Behavior */}
-        <Card className="bg-red-50 border border-red-200 rounded-2xl mb-8">
-          <CardContent className="p-8">
-            <AlertTriangle className="text-3xl mb-4 text-red-600" size={48} />
-            <h2 className="text-2xl font-bold text-red-900 mb-6">Prohibited Behavior</h2>
+        <Card className="bg-red-50 border border-red-200 rounded-lg mb-6">
+          <CardContent className="p-6">
+            <AlertTriangle className="w-8 h-8 mb-3 text-red-600" />
+            <h2 className="text-xl font-bold text-red-900 mb-4">Prohibited Behavior</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold text-red-900 mb-3">Zero Tolerance for:</h3>
@@ -156,10 +156,10 @@ export default function SafetyGuidelines() {
         </Card>
         
         {/* Payment Policy */}
-        <Card className="bg-yellow-50 border border-yellow-200 rounded-2xl mb-8">
-          <CardContent className="p-8">
-            <CreditCard className="text-3xl mb-4 text-yellow-600" size={48} />
-            <h2 className="text-2xl font-bold text-yellow-900 mb-4">Payment Policy</h2>
+        <Card className="bg-yellow-50 border border-yellow-200 rounded-lg mb-6">
+          <CardContent className="p-6">
+            <CreditCard className="w-8 h-8 mb-3 text-yellow-600" />
+            <h2 className="text-xl font-bold text-yellow-900 mb-3">Payment Policy</h2>
             <div className="text-yellow-800">
               <p className="mb-4">
                 <strong>Non-Refundable:</strong> The ₹99 premium access fee is non-refundable under any circumstances. 
@@ -178,10 +178,10 @@ export default function SafetyGuidelines() {
         </Card>
         
         {/* Reporting */}
-        <Card className="bg-white rounded-2xl shadow-lg text-center">
-          <CardContent className="p-8">
-            <Flag className="mx-auto text-4xl mb-4 text-red-500" size={64} />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Report Inappropriate Behavior</h2>
+        <Card className="bg-white rounded-lg shadow text-center">
+          <CardContent className="p-6">
+            <Flag className="w-8 h-8 mx-auto mb-3 text-red-500" />
+            <h2 className="text-xl font-bold text-gray-900 mb-3">Report Inappropriate Behavior</h2>
             <p className="text-gray-600 mb-6">
               If you encounter any inappropriate behavior, please report it immediately. 
               We take all reports seriously and will investigate promptly.
@@ -206,11 +206,11 @@ export default function SafetyGuidelines() {
           </CardContent>
         </Card>
         
-        <div className="text-center mt-8">
+        <div className="text-center mt-6">
           <Button 
             onClick={() => window.history.back()}
             variant="ghost"
-            className="text-rgpv-pink hover:underline"
+            className="text-pink-500 hover:underline"
             data-testid="button-go-back"
           >
             ← Go Back

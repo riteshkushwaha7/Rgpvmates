@@ -3,16 +3,7 @@ import { Heart, Shield, Users, MessageCircle } from 'lucide-react';
 
 const Landing = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-white to-orange-50">
-      {/* Floating Bubbles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="floating-bubble absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-pink-300 to-pink-400 rounded-full opacity-30"></div>
-        <div className="floating-bubble absolute top-40 right-20 w-16 h-16 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full opacity-40"></div>
-        <div className="floating-bubble absolute bottom-32 left-20 w-24 h-24 bg-gradient-to-br from-pink-200 to-pink-300 rounded-full opacity-25"></div>
-        <div className="floating-bubble absolute bottom-20 right-10 w-12 h-12 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full opacity-35"></div>
-        <div className="floating-bubble absolute top-1/2 left-1/4 w-18 h-18 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full opacity-20"></div>
-        <div className="floating-bubble absolute top-1/3 right-1/3 w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full opacity-30"></div>
-      </div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-white to-pink-100">
 
       {/* Header */}
       <header className="relative z-10 px-6 py-4">
@@ -47,10 +38,10 @@ const Landing = () => {
           {/* Hero Icons */}
           <div className="flex justify-center mb-8">
             <div className="relative">
-              <div className="w-32 h-32 bg-gradient-to-br from-pink-400 to-orange-400 rounded-full flex items-center justify-center shadow-2xl">
+              <div className="w-32 h-32 bg-gradient-to-br from-pink-400 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
                 <Heart className="w-16 h-16 text-white" />
               </div>
-              <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-orange-300 to-pink-300 rounded-full flex items-center justify-center shadow-lg">
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-pink-300 to-pink-400 rounded-full flex items-center justify-center shadow-lg">
                 <Heart className="w-10 h-10 text-white" />
               </div>
             </div>
@@ -97,8 +88,8 @@ const Landing = () => {
             </div>
 
             <div className="card-hover bg-white p-8 rounded-2xl shadow-lg">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mb-6 mx-auto">
-                <Users className="w-8 h-8 text-orange-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <Users className="w-8 h-8 text-pink-600" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">Smart Matching</h3>
               <p className="text-gray-600">
@@ -107,7 +98,7 @@ const Landing = () => {
             </div>
 
             <div className="card-hover bg-white p-8 rounded-2xl shadow-lg">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-orange-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full flex items-center justify-center mb-6 mx-auto">
                 <MessageCircle className="w-8 h-8 text-pink-600" />
               </div>
               <h3 className="text-xl font-semibold mb-4 text-gray-800">Safe Messaging</h3>
