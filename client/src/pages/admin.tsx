@@ -81,17 +81,23 @@ export default function Admin() {
   // Get admin headers for API calls
   const getAdminHeaders = () => {
     const storedCreds = localStorage.getItem('adminCredentials');
+    console.log('🔍 getAdminHeaders - storedCreds:', storedCreds);
+    
     if (storedCreds) {
       try {
         const creds = JSON.parse(storedCreds);
-        return {
+        console.log('🔍 getAdminHeaders - parsed creds:', creds);
+        const headers = {
           'x-admin-username': creds.username,
           'x-admin-password': creds.password
         };
+        console.log('🔍 getAdminHeaders - returning headers:', headers);
+        return headers;
       } catch (error) {
         console.error('Failed to parse stored credentials');
       }
     }
+    console.log('🔍 getAdminHeaders - no credentials found, returning empty object');
     return {};
   };
 
@@ -104,11 +110,14 @@ export default function Admin() {
 
   const fetchStats = async () => {
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...getAdminHeaders()
+      };
+      console.log('🔍 fetchStats - sending headers:', headers);
+      
       const response = await fetch(`${API_URL}/api/admin/stats`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAdminHeaders()
-        }
+        headers
       });
 
       if (response.ok) {
