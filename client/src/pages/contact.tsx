@@ -11,14 +11,8 @@ import {
   CreditCard, 
   AlertTriangle, 
   Lightbulb, 
-  Clock, 
-
   X,
-  Phone,
-  Mail,
-  ArrowLeft,
-  Image as ImageIcon,
-  Send
+  ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

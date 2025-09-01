@@ -2,15 +2,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { 
-  ArrowLeft, 
-  User, 
-  Shield, 
-  Bell, 
-  Lock, 
-  LogOut,
-  Settings as SettingsIcon,
-  Heart,
-  Crown
+  ArrowLeft
 } from 'lucide-react';
 import BottomNavigation from '../components/BottomNavigation';
 

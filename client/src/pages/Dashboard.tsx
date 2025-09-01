@@ -8,8 +8,7 @@ import {
   Settings, 
   LogOut, 
   User,
-  Crown,
-  Sparkles
+  Crown
 } from 'lucide-react';
 import BottomNavigation from '../components/BottomNavigation';
 
