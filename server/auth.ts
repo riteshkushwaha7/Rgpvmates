@@ -143,9 +143,20 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        age: user.age,
+        gender: user.gender,
+        college: user.college,
+        branch: user.branch,
+        graduationYear: user.graduationYear,
+        profileImageUrl: user.profileImageUrl,
         isApproved: user.isApproved,
         isAdmin: user.isAdmin,
         paymentDone: user.paymentDone,
+        likedUsers: user.likedUsers,
+        dislikedUsers: user.dislikedUsers,
+        blockedUsers: user.blockedUsers,
       }
     });
 

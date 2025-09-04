@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { config } from '../lib/config';
 import { 
   Heart, 
   Users, 
@@ -27,10 +28,8 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      
       // Fetch matches count
-      const matchesResponse = await fetch(`${API_URL}/api/matching/matches`, {
+      const matchesResponse = await fetch(`${config.API_URL}/api/matching/matches`, {
         headers: {
           'Content-Type': 'application/json',
           ...getUserHeaders()
@@ -42,7 +41,7 @@ const Dashboard = () => {
       }
 
       // Fetch unread messages count
-      const messagesResponse = await fetch(`${API_URL}/api/messages/unread/count`, {
+      const messagesResponse = await fetch(`${config.API_URL}/api/messages/unread/count`, {
         headers: {
           'Content-Type': 'application/json',
           ...getUserHeaders()

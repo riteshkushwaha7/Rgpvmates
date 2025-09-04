@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { config } from '../lib/config';
 
 import { Heart, X, ArrowLeft, User, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -39,22 +40,30 @@ const Discover = () => {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_URL}/api/discover`, {
+      console.log('🔍 Frontend - Fetching profiles from:', `${config.API_URL}/api/discover`);
+      console.log('🔍 Frontend - User headers:', getUserHeaders());
+      
+      const response = await fetch(`${config.API_URL}/api/discover`, {
         headers: {
           'Content-Type': 'application/json',
           ...getUserHeaders()
         }
       });
 
+      console.log('🔍 Frontend - Response status:', response.status);
+      console.log('🔍 Frontend - Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 Frontend - Profiles data received:', data);
         setProfiles(data);
       } else {
+        const errorData = await response.text();
+        console.error('🔍 Frontend - Error response:', errorData);
         toast.error('Failed to load profiles');
       }
     } catch (error) {
-      console.error('Error fetching profiles:', error);
+      console.error('🔍 Frontend - Fetch error:', error);
       toast.error('Failed to load profiles');
     } finally {
       setLoading(false);
@@ -68,8 +77,7 @@ const Discover = () => {
     const profile = profiles[currentIndex];
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_URL}/api/matching/swipe`, {
+      const response = await fetch(`${config.API_URL}/api/matching/swipe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

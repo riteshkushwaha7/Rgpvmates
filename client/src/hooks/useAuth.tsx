@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { config } from '../lib/config';
 
 interface User {
   id: string;
@@ -62,15 +63,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = config.API_URL;
 
   const checkAuth = async () => {
     try {
+      console.log('🔍 Auth - Starting authentication check');
+      console.log('🔍 Auth - API URL:', API_URL);
+      
       // Check if admin credentials are stored
       const storedAdminCreds = localStorage.getItem('adminCredentials');
       if (storedAdminCreds) {
         try {
           const adminCredentials = JSON.parse(storedAdminCreds);
+          console.log('🔍 Auth - Checking admin credentials');
           const adminResponse = await fetch(`${API_URL}/api/admin/credentials-test`, {
             headers: {
               'x-admin-username': adminCredentials.username,
@@ -79,6 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
 
           if (adminResponse.ok) {
+            console.log('🔍 Auth - Admin credentials valid');
             // Admin credentials are valid, set admin user
             setUser({
               id: 'ADMIN',
@@ -92,27 +98,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
             return;
           } else {
+            console.log('🔍 Auth - Admin credentials invalid, removing');
             // Admin credentials are invalid, remove them
             localStorage.removeItem('adminCredentials');
           }
         } catch (error) {
+          console.log('🔍 Auth - Admin credentials error:', error);
           localStorage.removeItem('adminCredentials');
         }
       }
 
       // If not admin, try regular user session check
+      console.log('🔍 Auth - Checking user session');
       const userResponse = await fetch(`${API_URL}/api/me`, {
         credentials: 'include',
       });
 
+      console.log('🔍 Auth - User session response status:', userResponse.status);
+
       if (userResponse.ok) {
         const userData = await userResponse.json();
+        console.log('🔍 Auth - User session valid, user data:', userData.user);
         setUser(userData.user);
       } else {
+        console.log('🔍 Auth - User session invalid');
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('🔍 Auth - Auth check failed:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -121,6 +134,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('🔍 Login - Attempting login for:', email);
+      console.log('🔍 Login - API URL:', API_URL);
+      
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -129,9 +145,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('🔍 Login - Response status:', response.status);
+      console.log('🔍 Login - Response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('🔍 Login - Response data:', data);
 
       if (response.ok) {
+        console.log('🔍 Login - Login successful, user data:', data.user);
         // Store user credentials for header-based authentication
         const userCredentials = { email, password };
         localStorage.setItem('userCredentials', JSON.stringify(userCredentials));
@@ -150,11 +171,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           navigate('/dashboard');
         }
       } else {
+        console.log('🔍 Login - Login failed:', data.error);
         toast.error(data.error || 'Login failed');
         throw new Error(data.error);
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('🔍 Login - Login error:', error);
       toast.error('Login failed. Please try again.');
       throw error;
     }
@@ -226,14 +248,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedCreds) {
       try {
         const creds = JSON.parse(storedCreds);
-        return {
+        const headers = {
           'x-user-email': creds.email,
           'x-user-password': creds.password
         };
+        console.log('🔍 Headers - Generated headers:', headers);
+        return headers;
       } catch (error) {
-        console.error('Failed to parse stored user credentials');
+        console.error('🔍 Headers - Failed to parse stored user credentials:', error);
       }
     }
+    console.log('🔍 Headers - No stored credentials found');
     return {};
   };
 

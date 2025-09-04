@@ -135,6 +135,9 @@ router.get('/me', async (req, res) => {
       isApproved: users.isApproved,
       isAdmin: users.isAdmin,
       paymentDone: users.paymentDone,
+      likedUsers: users.likedUsers,
+      dislikedUsers: users.dislikedUsers,
+      blockedUsers: users.blockedUsers,
     }).from(users).where(eq(users.id, req.session.userId)).limit(1);
 
     if (userResult.length === 0) {

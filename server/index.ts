@@ -30,12 +30,28 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 // CORS configuration
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'https://rgpvmates.vercel.app'
+  'https://rgpvmates.vercel.app',
+  'http://localhost:5173', // Local development
+  'http://localhost:3000'  // Alternative local port
 ].filter(Boolean);
 
+console.log('🔧 CORS allowed origins:', allowedOrigins);
+
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('🚫 CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-email', 'x-user-password']
 }));
 
 // Body parsing middleware
@@ -48,10 +64,10 @@ const sessionMiddleware = session({
   resave: true, // Changed to true for better persistence
   saveUninitialized: true, // Changed to true to save sessions immediately
   cookie: {
-    secure: false, // Set to false for Railway (they handle HTTPS)
+    secure: process.env.NODE_ENV === 'production', // Set to true in production for HTTPS
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days - longer session
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
   },
   name: 'rgpvmates.sid', // Custom session name
 });
