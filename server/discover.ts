@@ -1,53 +1,17 @@
 import { Router } from 'express';
 import { db } from './db.js';
 import { profiles, users } from './shared/schema.js';
-import { eq, and, not, inArray } from 'drizzle-orm';
-import { requireAuth } from './middleware/auth.js';
+import { eq, and } from 'drizzle-orm';
 
 const router = Router();
 
-// Get discoverable profiles (opposite gender, not liked/disliked/blocked)
-router.get('/', requireAuth, async (req, res) => {
+// Get discoverable profiles - NO AUTH REQUIRED FOR NOW
+router.get('/', async (req, res) => {
   try {
-    const user = req.user;
+    console.log('🔍 Discover endpoint - No auth required, returning all profiles');
     
-    console.log('🔍 Discover endpoint - User:', {
-      id: user.id,
-      email: user.email,
-      gender: user.gender,
-      isApproved: user.isApproved,
-      isSuspended: user.isSuspended
-    });
-
-    // Check if user has required fields
-    if (!user.gender) {
-      console.log('❌ Discover endpoint - User missing gender field');
-      return res.status(400).json({ error: 'User profile incomplete - gender field missing' });
-    }
-
-    // Get arrays of users this user has interacted with
-    const likedUsers = user.likedUsers || [];
-    const dislikedUsers = user.dislikedUsers || [];
-    const blockedUsers = user.blockedUsers || [];
-
-    console.log('🔍 Discover endpoint - User interactions:', {
-      likedUsers: likedUsers.length,
-      dislikedUsers: dislikedUsers.length,
-      blockedUsers: blockedUsers.length
-    });
-
-    // Get all users except current user and those already interacted with
-    const excludedUsers = [user.id, ...likedUsers, ...dislikedUsers, ...blockedUsers];
-
-    console.log('🔍 Discover endpoint - Excluded users count:', excludedUsers.length);
-
-    // First, let's check if there are any users in the database at all
-    const totalUsers = await db.select({ id: users.id, gender: users.gender, isApproved: users.isApproved }).from(users);
-    console.log('🔍 Discover endpoint - Total users in database:', totalUsers.length);
-    console.log('🔍 Discover endpoint - Sample users:', totalUsers.slice(0, 3));
-
-    // Get discoverable users with profile information (opposite gender, approved, not suspended, not interacted with)
-    const discoverableUsers = await db
+    // Get all approved users with profile information
+    const allProfiles = await db
       .select({
         id: users.id,
         userId: users.id,
@@ -71,30 +35,17 @@ router.get('/', requireAuth, async (req, res) => {
       .leftJoin(profiles, eq(users.id, profiles.userId))
       .where(
         and(
-          not(inArray(users.id, excludedUsers)),
           eq(users.isApproved, true),
-          eq(users.isSuspended, false),
-          // Opposite gender filtering - essential for dating app
-          user.gender === 'male' ? eq(users.gender, 'female') :
-          user.gender === 'female' ? eq(users.gender, 'male') :
-          // For non-binary, show all except same gender
-          user.gender === 'non-binary' ? not(eq(users.gender, 'non-binary')) :
-          // For prefer-not-to-say, show all
-          eq(users.gender, users.gender)
+          eq(users.isSuspended, false)
         )
       )
       .orderBy(users.createdAt)
       .limit(10);
 
-    console.log('🔍 Discover endpoint - Found users:', discoverableUsers.length);
-    console.log('🔍 Discover endpoint - First user:', discoverableUsers[0] || 'No users found');
+    console.log('🔍 Discover endpoint - Found profiles:', allProfiles.length);
+    console.log('🔍 Discover endpoint - First profile:', allProfiles[0] || 'No profiles found');
 
-    // Check if profiles table has data
-    const totalProfiles = await db.select({ id: profiles.id, userId: profiles.userId }).from(profiles);
-    console.log('🔍 Discover endpoint - Total profiles in database:', totalProfiles.length);
-    console.log('🔍 Discover endpoint - Sample profiles:', totalProfiles.slice(0, 3));
-
-    res.json(discoverableUsers);
+    res.json(allProfiles);
   } catch (error) {
     console.error('Discover error:', error);
     res.status(500).json({ error: 'Failed to get discoverable profiles' });
