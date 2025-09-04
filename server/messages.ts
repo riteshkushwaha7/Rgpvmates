@@ -3,7 +3,7 @@ import { db } from './db.js';
 import { messages, matches, users } from './shared/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth } from './middleware/jwtAuth.js';
 
 const router = Router();
 
@@ -96,7 +96,7 @@ router.get('/match/:matchId', requireAuth, async (req, res) => {
       .where(
         and(
           eq(matches.id, matchId),
-          eq(matches.user2Id, req.session.userId)
+          eq(matches.user2Id, user.id)
         )
       )
       .limit(1);
@@ -140,7 +140,7 @@ router.get('/match/:matchId', requireAuth, async (req, res) => {
     );
 
     // Mark messages as read if they're from the other user
-    const otherUserId = match[0].user1Id === req.session.userId ? match[0].user2Id : match[0].user1Id;
+    const otherUserId = match[0].user1Id === user.id ? match[0].user2Id : match[0].user1Id;
     
     await db.update(messages)
       .set({ isRead: true })
@@ -160,11 +160,9 @@ router.get('/match/:matchId', requireAuth, async (req, res) => {
 });
 
 // Send a message
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const { matchId, content } = messageSchema.parse(req.body);
 
@@ -173,7 +171,7 @@ router.post('/', async (req, res) => {
       .where(
         and(
           eq(matches.id, matchId),
-          eq(matches.user1Id, req.session.userId)
+          eq(matches.user1Id, user.id)
         )
       )
       .limit(1);
@@ -182,7 +180,7 @@ router.post('/', async (req, res) => {
       .where(
         and(
           eq(matches.id, matchId),
-          eq(matches.user2Id, req.session.userId)
+          eq(matches.user2Id, user.id)
         )
       )
       .limit(1);
@@ -196,7 +194,7 @@ router.post('/', async (req, res) => {
     // Create message
     const [newMessage] = await db.insert(messages).values({
       matchId,
-      senderId: req.session.userId,
+      senderId: user.id,
       content,
       isRead: false,
     }).returning();
@@ -212,11 +210,9 @@ router.post('/', async (req, res) => {
 });
 
 // Mark messages as read
-router.put('/read/:matchId', async (req, res) => {
+router.put('/read/:matchId', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const { matchId } = req.params;
 
@@ -225,7 +221,7 @@ router.put('/read/:matchId', async (req, res) => {
       .where(
         and(
           eq(matches.id, matchId),
-          eq(matches.user1Id, req.session.userId)
+          eq(matches.user1Id, user.id)
         )
       )
       .limit(1);
@@ -234,7 +230,7 @@ router.put('/read/:matchId', async (req, res) => {
       .where(
         and(
           eq(matches.id, matchId),
-          eq(matches.user2Id, req.session.userId)
+          eq(matches.user2Id, user.id)
         )
       )
       .limit(1);
@@ -251,7 +247,7 @@ router.put('/read/:matchId', async (req, res) => {
       .where(
         and(
           eq(messages.matchId, matchId),
-          eq(messages.senderId, req.session.userId === match[0].user1Id ? match[0].user2Id : match[0].user1Id),
+          eq(messages.senderId, user.id === match[0].user1Id ? match[0].user2Id : match[0].user1Id),
           eq(messages.isRead, false)
         )
       );

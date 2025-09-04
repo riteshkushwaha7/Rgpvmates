@@ -3,6 +3,7 @@ import { db } from './db.js';
 import { contactSubmissions } from './shared/schema.js';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from './middleware/jwtAuth.js';
 
 const router = Router();
 
@@ -48,9 +49,11 @@ router.post('/', async (req, res) => {
 });
 
 // Get contact submissions (admin only)
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId || !req.session.isAdmin) {
+    const user = req.user;
+    
+    if (!user.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -65,9 +68,11 @@ router.get('/', async (req, res) => {
 });
 
 // Mark contact submission as resolved (admin only)
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId || !req.session.isAdmin) {
+    const user = req.user;
+    
+    if (!user.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

@@ -4,6 +4,7 @@ import { db } from './db.js';
 import { users } from './shared/schema.js';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { generateToken } from './middleware/jwtAuth.js';
 
 const router = Router();
 
@@ -80,10 +81,7 @@ router.post('/register', async (req, res) => {
       isApproved: false, // Requires admin approval
     }).returning();
 
-    // Set session
-    req.session.userId = newUser.id;
-    req.session.email = newUser.email;
-    req.session.isAdmin = newUser.isAdmin;
+    // No session needed for JWT authentication
 
     res.status(201).json({
       message: 'Registration successful. Awaiting admin approval.',
@@ -134,30 +132,32 @@ router.post('/login', async (req, res) => {
     }
 
     // Set session
-            // NO SESSION - Just return user data for frontend storage
-        console.log('✅ Login successful - No session needed');
+                    // Generate JWT token for authentication
+        const token = generateToken(user.id, user.email);
+        console.log('✅ Login successful - JWT token generated');
 
-    res.json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        age: user.age,
-        gender: user.gender,
-        college: user.college,
-        branch: user.branch,
-        graduationYear: user.graduationYear,
-        profileImageUrl: user.profileImageUrl,
-        isApproved: user.isApproved,
-        isAdmin: user.isAdmin,
-        paymentDone: user.paymentDone,
-        likedUsers: user.likedUsers,
-        dislikedUsers: user.dislikedUsers,
-        blockedUsers: user.blockedUsers,
-      }
-    });
+        res.json({
+          message: 'Login successful',
+          token: token, // JWT token for authentication
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            age: user.age,
+            gender: user.gender,
+            college: user.college,
+            branch: user.branch,
+            graduationYear: user.graduationYear,
+            profileImageUrl: user.profileImageUrl,
+            isApproved: user.isApproved,
+            isAdmin: user.isAdmin,
+            paymentDone: user.paymentDone,
+            likedUsers: user.likedUsers,
+            dislikedUsers: user.dislikedUsers,
+            blockedUsers: user.blockedUsers,
+          }
+        });
 
   } catch (error) {
     console.error('Login error:', error);

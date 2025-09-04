@@ -24,7 +24,7 @@ interface Profile {
 }
 
 const Discover = () => {
-  const { getUserHeaders, hasValidCredentials, refreshAuth, debugAuthState, loading: authLoading, isAuthenticated } = useAuth();
+  const { getAuthHeaders, hasValidCredentials, refreshAuth, debugAuthState, loading: authLoading, isAuthenticated } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -58,12 +58,12 @@ const Discover = () => {
       
       console.log('🔍 Frontend - Fetching profiles from:', `${config.API_URL}/api/discover`);
       
-      const headers = getUserHeaders();
-      console.log('🔍 Frontend - Sending headers:', headers);
+      const headers = getAuthHeaders();
+      console.log('🔍 Frontend - Sending JWT headers:', headers);
       
-      if (!headers['x-user-id'] || !headers['x-user-email']) {
-        console.error('🔍 Frontend - Invalid headers generated:', headers);
-        toast.error('Authentication error. Please log in again.');
+      if (!headers['Authorization']) {
+        console.error('🔍 Frontend - No JWT token available');
+        toast.error('Authentication required. Please log in again.');
         setLoading(false);
         return;
       }

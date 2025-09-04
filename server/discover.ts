@@ -2,16 +2,46 @@ import { Router } from 'express';
 import { db } from './db.js';
 import { profiles, users } from './shared/schema.js';
 import { eq, and, not, inArray } from 'drizzle-orm';
+import { requireAuth } from './middleware/jwtAuth.js';
 
 const router = Router();
 
-// Get discoverable profiles - NO AUTH REQUIRED FOR NOW
-router.get('/', async (req, res) => {
+// Get discoverable profiles - WITH PROPER AUTH AND GENDER FILTERING
+router.get('/', requireAuth, async (req, res) => {
   try {
-    console.log('🔍 Discover endpoint - No auth required, returning all profiles');
+    const user = req.user;
     
-    // Get all approved users with profile information
-    const allProfiles = await db
+    console.log('🔍 Discover endpoint - User authenticated:', {
+      id: user.id,
+      email: user.email,
+      gender: user.gender,
+      isApproved: user.isApproved
+    });
+
+    // Check if user has required fields
+    if (!user.gender) {
+      console.log('❌ Discover endpoint - User missing gender field');
+      return res.status(400).json({ error: 'User profile incomplete - gender field missing' });
+    }
+
+    // Get arrays of users this user has interacted with
+    const likedUsers = user.likedUsers || [];
+    const dislikedUsers = user.dislikedUsers || [];
+    const blockedUsers = user.blockedUsers || [];
+
+    console.log('🔍 Discover endpoint - User interactions:', {
+      likedUsers: likedUsers.length,
+      dislikedUsers: dislikedUsers.length,
+      blockedUsers: blockedUsers.length
+    });
+
+    // Get all users except current user and those already interacted with
+    const excludedUsers = [user.id, ...likedUsers, ...dislikedUsers, ...blockedUsers];
+
+    console.log('🔍 Discover endpoint - Excluded users count:', excludedUsers.length);
+
+    // Get discoverable users with profile information (opposite gender, approved, not suspended, not interacted with)
+    const discoverableUsers = await db
       .select({
         id: users.id,
         userId: users.id,
@@ -35,27 +65,36 @@ router.get('/', async (req, res) => {
       .leftJoin(profiles, eq(users.id, profiles.userId))
       .where(
         and(
+          not(inArray(users.id, excludedUsers)),
           eq(users.isApproved, true),
-          eq(users.isSuspended, false)
+          eq(users.isSuspended, false),
+          // Opposite gender filtering - essential for dating app
+          user.gender === 'male' ? eq(users.gender, 'female') :
+          user.gender === 'female' ? eq(users.gender, 'male') :
+          // For non-binary, show all except same gender
+          user.gender === 'non-binary' ? not(eq(users.gender, 'non-binary')) :
+          // For prefer-not-to-say, show all
+          eq(users.gender, users.gender)
         )
       )
       .orderBy(users.createdAt)
       .limit(10);
 
-    console.log('🔍 Discover endpoint - Found profiles:', allProfiles.length);
-    console.log('🔍 Discover endpoint - First profile:', allProfiles[0] || 'No profiles found');
+    console.log('🔍 Discover endpoint - Found users:', discoverableUsers.length);
+    console.log('🔍 Discover endpoint - First user:', discoverableUsers[0] || 'No users found');
 
-    res.json(allProfiles);
+    res.json(discoverableUsers);
   } catch (error) {
     console.error('Discover error:', error);
     res.status(500).json({ error: 'Failed to get discoverable profiles' });
   }
 });
 
-// Debug endpoint to get all users without filtering - NO AUTH REQUIRED
-router.get('/debug-all-users', async (req, res) => {
+// Debug endpoint to get all users without filtering - WITH JWT AUTH
+router.get('/debug-all-users', requireAuth, async (req, res) => {
   try {
-    console.log('🔍 Debug endpoint - No auth required, returning all users');
+    const user = req.user;
+    console.log('🔍 Debug endpoint - User authenticated:', { id: user.id, email: user.email });
 
     // Get all users without any filtering
     const allUsers = await db
@@ -87,12 +126,27 @@ router.get('/debug-all-users', async (req, res) => {
   }
 });
 
-// Get next profile for swiping - NO AUTH REQUIRED FOR NOW
-router.get('/next', async (req, res) => {
+// Get next profile for swiping - WITH JWT AUTH
+router.get('/next', requireAuth, async (req, res) => {
   try {
-    console.log('🔍 Next profile endpoint - No auth required, returning first profile');
+    const user = req.user;
+    console.log('🔍 Next profile endpoint - User authenticated:', { id: user.id, email: user.email });
 
-    // Get first approved user with profile information
+    // Check if user has required fields
+    if (!user.gender) {
+      console.log('❌ Next profile endpoint - User missing gender field');
+      return res.status(400).json({ error: 'User profile incomplete - gender field missing' });
+    }
+
+    // Get arrays of users this user has interacted with
+    const likedUsers = user.likedUsers || [];
+    const dislikedUsers = user.dislikedUsers || [];
+    const blockedUsers = user.blockedUsers || [];
+
+    // Get all users except current user and those already interacted with
+    const excludedUsers = [user.id, ...likedUsers, ...dislikedUsers, ...blockedUsers];
+
+    // Get next discoverable user with profile information (opposite gender, approved, not suspended, not interacted with)
     const nextUser = await db
       .select({
         id: users.id,
@@ -117,8 +171,16 @@ router.get('/next', async (req, res) => {
       .leftJoin(profiles, eq(users.id, profiles.userId))
       .where(
         and(
+          not(inArray(users.id, excludedUsers)),
           eq(users.isApproved, true),
-          eq(users.isSuspended, false)
+          eq(users.isSuspended, false),
+          // Opposite gender filtering - essential for dating app
+          user.gender === 'male' ? eq(users.gender, 'female') :
+          user.gender === 'female' ? eq(users.gender, 'male') :
+          // For non-binary, show all except same gender
+          user.gender === 'non-binary' ? not(eq(users.gender, 'non-binary')) :
+          // For prefer-not-to-say, show all
+          eq(users.gender, users.gender)
         )
       )
       .orderBy(users.createdAt)

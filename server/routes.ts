@@ -13,6 +13,7 @@ import { branchRoutes } from './branches.js';
 import { db } from './db.js';
 import { users } from './shared/schema.js';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from './middleware/jwtAuth.js';
 
 const router = Router();
 
@@ -81,56 +82,51 @@ router.use('/upload', uploadRoutes);
 router.use('/colleges', collegeRoutes);
 router.use('/branches', branchRoutes);
 
-// User authentication check - NO AUTH REQUIRED FOR NOW
-router.get('/me', async (req, res) => {
+// User authentication check - WITH JWT AUTHENTICATION
+router.get('/me', requireAuth, async (req, res) => {
   try {
-    // Try to get user from headers if available
-    const userId = req.headers['x-user-id'] as string;
-    const userEmail = req.headers['x-user-email'] as string;
+    const user = req.user;
     
-    if (userId && userEmail) {
-      // Get full user data from database
-      const userResult = await db.select({
-        id: users.id,
-        email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        age: users.age,
-        gender: users.gender,
-        college: users.college,
-        branch: users.branch,
-        graduationYear: users.graduationYear,
-        profileImageUrl: users.profileImageUrl,
-        isApproved: users.isApproved,
-        isAdmin: users.isAdmin,
-        paymentDone: users.paymentDone,
-        likedUsers: users.likedUsers,
-        dislikedUsers: users.dislikedUsers,
-        blockedUsers: users.blockedUsers,
-      }).from(users).where(eq(users.id, userId)).limit(1);
-
-      if (userResult.length === 0) {
-        return res.status(404).json({ error: 'User not found' });
+    console.log('🔍 /me endpoint - User authenticated:', { id: user.id, email: user.email });
+    
+    // Return the authenticated user data
+    res.json({ 
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        age: user.age,
+        gender: user.gender,
+        college: user.college,
+        branch: user.branch,
+        graduationYear: user.graduationYear,
+        profileImageUrl: user.profileImageUrl,
+        isApproved: user.isApproved,
+        isAdmin: user.isAdmin,
+        paymentDone: user.paymentDone,
+        likedUsers: user.likedUsers,
+        dislikedUsers: user.dislikedUsers,
+        blockedUsers: user.blockedUsers,
+        createdAt: user.createdAt,
       }
-
-      res.json({ user: userResult[0] });
-    } else {
-      // Return a default response for now
-      res.json({ message: 'No user ID provided' });
-    }
+    });
   } catch (error) {
-    console.error('Get user data error:', error);
-    res.status(500).json({ error: 'Failed to get user data' });
+    console.error('/me endpoint error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Update user profile - NO AUTH REQUIRED FOR NOW
-router.put('/me', async (req, res) => {
+// Update user profile - WITH JWT AUTHENTICATION
+router.put('/me', requireAuth, async (req, res) => {
   try {
+    const user = req.user;
     const { age, college, branch, graduationYear, bio } = req.body;
     
-    // For now, just return success
-    res.json({ message: 'Profile update endpoint - auth not implemented yet' });
+    console.log('🔍 /me (PUT) endpoint - User authenticated:', { id: user.id, email: user.email });
+    
+    // For now, just return success (profile update logic can be implemented later)
+    res.json({ message: 'Profile update endpoint - authentication working, update logic pending' });
   } catch (error) {
     console.error('User update error:', error);
     res.status(500).json({ error: 'Failed to update user' });

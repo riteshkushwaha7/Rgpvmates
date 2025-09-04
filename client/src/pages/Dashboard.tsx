@@ -14,7 +14,7 @@ import {
 import BottomNavigation from '../components/BottomNavigation';
 
 const Dashboard = () => {
-  const { user, logout, getUserHeaders } = useAuth();
+  const { user, logout, getAuthHeaders } = useAuth();
   const [stats, setStats] = useState({
     matches: 0,
     messages: 0,
@@ -33,7 +33,7 @@ const Dashboard = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          ...getUserHeaders()
+          ...getAuthHeaders()
         }
       });
       if (matchesResponse.ok) {
@@ -46,7 +46,7 @@ const Dashboard = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          ...getUserHeaders()
+          ...getAuthHeaders()
         }
       });
       if (messagesResponse.ok) {

@@ -4,6 +4,7 @@ import { profiles, users } from './shared/schema.js';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { upload, uploadBase64Image } from './imageUpload.js';
+import { requireAuth } from './middleware/jwtAuth.js';
 
 const router = Router();
 
@@ -20,16 +21,14 @@ const profileSchema = z.object({
 });
 
 // Create/Update profile
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const profileData = profileSchema.parse(req.body);
 
     // Check if profile already exists
-    const existingProfile = await db.select().from(profiles).where(eq(profiles.userId, req.session.userId)).limit(1);
+    const existingProfile = await db.select().from(profiles).where(eq(profiles.userId, user.id)).limit(1);
 
     let result;
     if (existingProfile.length > 0) {
@@ -39,7 +38,7 @@ router.post('/', async (req, res) => {
       
       [result] = await db.update(profiles)
         .set({ ...updateData, updatedAt: new Date() })
-        .where(eq(profiles.userId, req.session.userId))
+        .where(eq(profiles.userId, user.id))
         .returning();
     } else {
       // Create new profile - all fields required for new profiles
@@ -48,7 +47,7 @@ router.post('/', async (req, res) => {
       }
       
       [result] = await db.insert(profiles)
-        .values({ ...profileData, userId: req.session.userId })
+        .values({ ...profileData, userId: user.id })
         .returning();
     }
 
@@ -63,11 +62,9 @@ router.post('/', async (req, res) => {
 });
 
 // Upload profile picture
-router.post('/upload-picture', upload.single('image'), async (req, res) => {
+router.post('/upload-picture', requireAuth, upload.single('image'), async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
@@ -78,7 +75,7 @@ router.post('/upload-picture', upload.single('image'), async (req, res) => {
     // Update profile with new picture
     const [profile] = await db.update(profiles)
       .set({ profilePicture: imageUrl, updatedAt: new Date() })
-      .where(eq(profiles.userId, req.session.userId))
+      .where(eq(profiles.userId, user.id))
       .returning();
 
     res.json({ profilePicture: imageUrl });
@@ -89,11 +86,9 @@ router.post('/upload-picture', upload.single('image'), async (req, res) => {
 });
 
 // Upload additional photos
-router.post('/upload-photos', upload.array('photos', 5), async (req, res) => {
+router.post('/upload-photos', requireAuth, upload.array('photos', 5), async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No image files provided' });
@@ -102,7 +97,7 @@ router.post('/upload-photos', upload.array('photos', 5), async (req, res) => {
     const photoUrls = (req.files as Express.Multer.File[]).map(file => file.path);
 
     // Get existing photos
-    const existingProfile = await db.select().from(profiles).where(eq(profiles.userId, req.session.userId)).limit(1);
+    const existingProfile = await db.select().from(profiles).where(eq(profiles.userId, user.id)).limit(1);
     const existingPhotos = existingProfile[0]?.photos || [];
 
     // Add new photos (limit to 5 total)
@@ -111,7 +106,7 @@ router.post('/upload-photos', upload.array('photos', 5), async (req, res) => {
     // Update profile with new photos
     const [profile] = await db.update(profiles)
       .set({ photos: allPhotos, updatedAt: new Date() })
-      .where(eq(profiles.userId, req.session.userId))
+      .where(eq(profiles.userId, user.id))
       .returning();
 
     res.json({ photos: allPhotos });
@@ -122,11 +117,9 @@ router.post('/upload-photos', upload.array('photos', 5), async (req, res) => {
 });
 
 // Remove photo
-router.delete('/remove-photo/:index', async (req, res) => {
+router.delete('/remove-photo/:index', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const photoIndex = parseInt(req.params.index);
     if (isNaN(photoIndex) || photoIndex < 0) {
@@ -134,7 +127,7 @@ router.delete('/remove-photo/:index', async (req, res) => {
     }
 
     // Get existing photos
-    const existingProfile = await db.select().from(profiles).where(eq(profiles.userId, req.session.userId)).limit(1);
+    const existingProfile = await db.select().from(profiles).where(eq(profiles.userId, user.id)).limit(1);
     const existingPhotos = existingProfile[0]?.photos || [];
 
     if (photoIndex >= existingPhotos.length) {
@@ -147,7 +140,7 @@ router.delete('/remove-photo/:index', async (req, res) => {
     // Update profile
     const [profile] = await db.update(profiles)
       .set({ photos: updatedPhotos, updatedAt: new Date() })
-      .where(eq(profiles.userId, req.session.userId))
+      .where(eq(profiles.userId, user.id))
       .returning();
 
     res.json({ photos: updatedPhotos });
@@ -158,13 +151,11 @@ router.delete('/remove-photo/:index', async (req, res) => {
 });
 
 // Get user's own profile
-router.get('/me', async (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
-    const profile = await db.select().from(profiles).where(eq(profiles.userId, req.session.userId)).limit(1);
+    const profile = await db.select().from(profiles).where(eq(profiles.userId, user.id)).limit(1);
     
     if (profile.length === 0) {
       return res.status(404).json({ error: 'Profile not found' });
@@ -178,9 +169,11 @@ router.get('/me', async (req, res) => {
 });
 
 // Get all profiles (for admin)
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId || !req.session.isAdmin) {
+    const user = req.user;
+    
+    if (!user.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -193,11 +186,9 @@ router.get('/', async (req, res) => {
 });
 
 // Get profile by user ID
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const { userId } = req.params;
     const profile = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);

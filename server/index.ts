@@ -40,15 +40,15 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'x-user-email', 'x-admin-username', 'x-admin-password']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-username', 'x-admin-password']
 }));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// NO SESSION MANAGEMENT - Using localStorage + user ID validation
-console.log('🔧 NO SESSION - Using localStorage + user ID validation');
+// JWT AUTHENTICATION - Using JWT tokens for secure authentication
+console.log('🔧 JWT AUTH - Using JWT tokens for secure authentication');
 console.log('🔧 DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not Set');
 console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
 

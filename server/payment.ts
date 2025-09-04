@@ -5,6 +5,7 @@ import { users, payments } from './shared/schema.js';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { requireAuth } from './middleware/jwtAuth.js';
 
 const router = Router();
 
@@ -41,11 +42,9 @@ router.get('/status', (req, res) => {
 });
 
 // Create payment order
-router.post('/create-order', async (req, res) => {
+router.post('/create-order', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const { amount } = req.body;
 
@@ -58,7 +57,7 @@ router.post('/create-order', async (req, res) => {
 
     // Save payment record
     const [payment] = await db.insert(payments).values({
-      userId: req.session.userId,
+      userId: user.id,
       amount,
       status: 'pending',
       razorpayPaymentId: order.id,
@@ -77,11 +76,9 @@ router.post('/create-order', async (req, res) => {
 });
 
 // Verify payment
-router.post('/verify', async (req, res) => {
+router.post('/verify', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
@@ -112,7 +109,7 @@ router.post('/verify', async (req, res) => {
         paymentId: razorpay_payment_id,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, req.session.userId));
+      .where(eq(users.id, user.id));
 
     res.json({ message: 'Payment verified successfully' });
   } catch (error) {
@@ -122,11 +119,9 @@ router.post('/verify', async (req, res) => {
 });
 
 // Premium bypass for testing
-router.post('/bypass', async (req, res) => {
+router.post('/bypass', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     // Update user payment status
     await db.update(users)
@@ -136,7 +131,7 @@ router.post('/bypass', async (req, res) => {
         paymentId: 'BYPASS',
         updatedAt: new Date(),
       })
-      .where(eq(users.id, req.session.userId));
+      .where(eq(users.id, user.id));
 
     res.json({ message: 'Premium bypassed successfully' });
   } catch (error) {
@@ -146,14 +141,12 @@ router.post('/bypass', async (req, res) => {
 });
 
 // Get payment history
-router.get('/history', async (req, res) => {
+router.get('/history', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const user = req.user;
 
     const paymentHistory = await db.select().from(payments)
-      .where(eq(payments.userId, req.session.userId))
+      .where(eq(payments.userId, user.id))
       .orderBy(payments.createdAt);
 
     res.json(paymentHistory);

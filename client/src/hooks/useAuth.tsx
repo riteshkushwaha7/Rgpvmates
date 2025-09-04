@@ -30,7 +30,7 @@ interface AuthContextType {
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
-  getUserHeaders: () => Record<string, string>;
+  getAuthHeaders: () => Record<string, string>;
   hasValidCredentials: () => boolean;
   refreshAuth: () => Promise<void>;
   debugAuthState: () => void;
@@ -112,41 +112,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Check if user data is stored in localStorage
-      const storedUserData = localStorage.getItem('userData');
-      if (storedUserData) {
+      // Check if JWT token is stored in localStorage
+      const storedToken = localStorage.getItem('jwtToken');
+      if (storedToken) {
         try {
-          const userData = JSON.parse(storedUserData);
-          console.log('🔍 Auth - Found stored user data, restoring user session');
+          console.log('🔍 Auth - Found stored JWT token, validating');
           
-          // Validate stored user data by calling /api/me
+          // Validate JWT token by calling /api/me
           const userResponse = await fetch(`${API_URL}/api/me`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              'x-user-id': userData.id,
-              'x-user-email': userData.email
+              'Authorization': `Bearer ${storedToken}`
             }
           });
 
-          console.log('🔍 Auth - User validation response status:', userResponse.status);
+          console.log('🔍 Auth - JWT validation response status:', userResponse.status);
 
           if (userResponse.ok) {
             const responseData = await userResponse.json();
-            console.log('🔍 Auth - User validation successful, restoring user session');
+            console.log('🔍 Auth - JWT validation successful, restoring user session');
             setUser(responseData.user);
           } else {
-            console.log('🔍 Auth - User validation failed, clearing invalid data');
+            console.log('🔍 Auth - JWT validation failed, clearing invalid token');
+            localStorage.removeItem('jwtToken');
             localStorage.removeItem('userData');
             setUser(null);
           }
         } catch (error) {
-          console.error('🔍 Auth - User validation error:', error);
+          console.error('🔍 Auth - JWT validation error:', error);
+          localStorage.removeItem('jwtToken');
           localStorage.removeItem('userData');
           setUser(null);
         }
       } else {
-        console.log('🔍 Auth - No stored user data found');
+        console.log('🔍 Auth - No stored JWT token found');
         setUser(null);
       }
     } catch (error) {
@@ -179,7 +179,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (response.ok) {
         console.log('🔍 Login - Login successful, user data:', data.user);
         
-        // Store user data for authentication (NO PASSWORD STORED)
+        // Store JWT token for authentication
+        if (data.token) {
+          localStorage.setItem('jwtToken', data.token);
+          console.log('🔍 Login - JWT token stored in localStorage');
+        }
+        
+        // Store user data
         const userData = { 
           id: data.user.id,
           email: data.user.email,
@@ -199,7 +205,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           blockedUsers: data.user.blockedUsers
         };
         localStorage.setItem('userData', JSON.stringify(userData));
-        console.log('🔍 Login - User data stored in localStorage for authentication');
+        console.log('🔍 Login - User data stored in localStorage');
         
         setUser(data.user);
         toast.success('Login successful!');
@@ -286,21 +292,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Get user headers for API calls - using user ID + email (NO PASSWORD)
-  const getUserHeaders = () => {
-    if (user && user.id && user.email) {
+  // Get JWT token for API calls
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('jwtToken');
+    if (token) {
       const headers = {
-        'x-user-id': user.id,
-        'x-user-email': user.email
+        'Authorization': `Bearer ${token}`
       };
-      console.log('🔍 Headers - Generated headers for API call:', {
-        userId: user.id ? 'Present' : 'Missing',
-        email: user.email ? 'Present' : 'Missing'
-      });
+      console.log('🔍 JWT Headers - Generated Authorization header');
       return headers;
     }
     
-    console.log('🔍 Headers - No user data available - user will need to relogin');
+    console.log('🔍 JWT Headers - No token available - user will need to relogin');
     return {};
   };
 
@@ -309,7 +312,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clear all stored data
       localStorage.removeItem('adminCredentials');
       localStorage.removeItem('userData');
-      console.log('🔍 Logout - All user data cleared from localStorage');
+      localStorage.removeItem('jwtToken');
+      console.log('🔍 Logout - All user data and JWT token cleared from localStorage');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -325,18 +329,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Check if user has valid data stored
+  // Check if user has valid JWT token stored
   const hasValidCredentials = () => {
-    const storedUserData = localStorage.getItem('userData');
-    if (storedUserData) {
-      try {
-        const userData = JSON.parse(storedUserData);
-        return userData.id && userData.email;
-      } catch (error) {
-        return false;
-      }
-    }
-    return false;
+    const storedToken = localStorage.getItem('jwtToken');
+    return !!storedToken;
   };
 
   // Force refresh authentication state (useful for debugging)
@@ -384,7 +380,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     register,
     logout,
     checkAuth,
-    getUserHeaders,
+    getAuthHeaders,
     hasValidCredentials,
     refreshAuth,
     debugAuthState,

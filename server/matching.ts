@@ -3,7 +3,7 @@ import { db } from './db.js';
 import { users, matches, swipes } from './shared/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth } from './middleware/jwtAuth.js';
 
 const router = Router();
 
@@ -94,8 +94,8 @@ router.post('/swipe', requireAuth, async (req, res) => {
 
           if (existingMatch.length === 0) {
             // Create match record with consistent ordering (alphabetical by ID for consistency)
-            const user1Id = req.session.userId < swipedId ? req.session.userId : swipedId;
-            const user2Id = req.session.userId < swipedId ? swipedId : req.session.userId;
+            const user1Id = user.id < swipedId ? user.id : swipedId;
+            const user2Id = user.id < swipedId ? swipedId : user.id;
             
             await db.insert(matches).values({
               user1Id,
@@ -104,7 +104,7 @@ router.post('/swipe', requireAuth, async (req, res) => {
             
             console.log(`Created match: ${user1Id} <-> ${user2Id}`);
           } else {
-            console.log(`Match already exists between ${req.session.userId} and ${swipedId}`);
+            console.log(`Match already exists between ${user.id} and ${swipedId}`);
           }
 
           // Update both users' matches arrays
@@ -114,14 +114,14 @@ router.post('/swipe', requireAuth, async (req, res) => {
           if (!userMatches.includes(swipedId)) {
             userMatches.push(swipedId);
           }
-          if (!otherUserMatches.includes(req.session.userId)) {
-            otherUserMatches.push(req.session.userId);
-          }
+                  if (!otherUserMatches.includes(user.id)) {
+          otherUserMatches.push(user.id);
+        }
 
           // Update both users
           await db.update(users)
             .set({ matches: userMatches, updatedAt: new Date() })
-            .where(eq(users.id, req.session.userId));
+            .where(eq(users.id, user.id));
 
           await db.update(users)
             .set({ matches: otherUserMatches, updatedAt: new Date() })
@@ -206,21 +206,12 @@ router.get('/matches', requireAuth, async (req, res) => {
 });
 
 // Block a user
-router.post('/block', async (req, res) => {
+router.post('/block', requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
+    const user = req.user;
     const { userId } = req.body;
 
-    // Get current user
-    const currentUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
-    if (currentUser.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const user = currentUser[0];
+    // User is already authenticated by middleware
     const blockedUsers = user.blockedUsers || [];
 
     // Add to blocked users if not already there
@@ -250,7 +241,7 @@ router.post('/block', async (req, res) => {
         dislikedUsers,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, req.session.userId));
+      .where(eq(users.id, user.id));
 
     res.json({ message: 'User blocked successfully' });
   } catch (error) {
