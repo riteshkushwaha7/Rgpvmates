@@ -14,7 +14,6 @@ import { db } from './db.js';
 import { users } from './shared/schema.js';
 import { eq } from 'drizzle-orm';
 
-
 const router = Router();
 
 // Health check
@@ -67,15 +66,6 @@ router.get('/test', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   }
-});
-
-// NO SESSION TEST - Using localStorage + user ID validation
-router.get('/auth-status', (req, res) => {
-  res.json({ 
-    message: 'Authentication system active',
-    method: 'localStorage + user ID validation',
-    timestamp: new Date().toISOString()
-  });
 });
 
 // Mount route modules

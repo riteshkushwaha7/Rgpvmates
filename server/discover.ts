@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from './db.js';
 import { profiles, users } from './shared/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, not, inArray } from 'drizzle-orm';
 
 const router = Router();
 
@@ -52,16 +52,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Debug endpoint to get all users without filtering
-router.get('/debug-all-users', requireAuth, async (req, res) => {
+// Debug endpoint to get all users without filtering - NO AUTH REQUIRED
+router.get('/debug-all-users', async (req, res) => {
   try {
-    const user = req.user;
-    
-    console.log('🔍 Debug endpoint - User:', {
-      id: user.id,
-      email: user.email,
-      gender: user.gender
-    });
+    console.log('🔍 Debug endpoint - No auth required, returning all users');
 
     // Get all users without any filtering
     const allUsers = await db
@@ -85,13 +79,6 @@ router.get('/debug-all-users', requireAuth, async (req, res) => {
     res.json({
       message: 'Debug endpoint - All users in database',
       totalUsers: allUsers.length,
-      currentUser: {
-        id: user.id,
-        email: user.email,
-        gender: user.gender,
-        isApproved: user.isApproved,
-        isSuspended: user.isSuspended
-      },
       users: allUsers
     });
   } catch (error) {
@@ -100,26 +87,12 @@ router.get('/debug-all-users', requireAuth, async (req, res) => {
   }
 });
 
-// Get next profile for swiping
-router.get('/next', requireAuth, async (req, res) => {
+// Get next profile for swiping - NO AUTH REQUIRED FOR NOW
+router.get('/next', async (req, res) => {
   try {
-    const user = req.user;
+    console.log('🔍 Next profile endpoint - No auth required, returning first profile');
 
-    console.log('🔍 Next profile endpoint - User:', {
-      id: user.id,
-      email: user.email,
-      gender: user.gender
-    });
-
-    // Get arrays of users this user has interacted with
-    const likedUsers = user.likedUsers || [];
-    const dislikedUsers = user.dislikedUsers || [];
-    const blockedUsers = user.blockedUsers || [];
-
-    // Get all users except current user and those already interacted with
-    const excludedUsers = [user.id, ...likedUsers, ...dislikedUsers, ...blockedUsers];
-
-    // Get next user for swiping with profile information
+    // Get first approved user with profile information
     const nextUser = await db
       .select({
         id: users.id,
@@ -144,16 +117,8 @@ router.get('/next', requireAuth, async (req, res) => {
       .leftJoin(profiles, eq(users.id, profiles.userId))
       .where(
         and(
-          not(inArray(users.id, excludedUsers)),
           eq(users.isApproved, true),
-          eq(users.isSuspended, false),
-          // Opposite gender filtering
-          user.gender === 'male' ? eq(users.gender, 'female') :
-          user.gender === 'female' ? eq(users.gender, 'male') :
-          // For non-binary, show all except same gender
-          user.gender === 'non-binary' ? not(eq(users.gender, 'non-binary')) :
-          // For prefer-not-to-say, show all
-          eq(users.gender, users.gender)
+          eq(users.isSuspended, false)
         )
       )
       .orderBy(users.createdAt)
