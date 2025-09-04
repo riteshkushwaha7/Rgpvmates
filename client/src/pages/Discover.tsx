@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { config } from '../lib/config';
 
-import { Heart, X, ArrowLeft, User, Bell } from 'lucide-react';
+import { Heart, X, ArrowLeft, User, Bell, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BottomNavigation from '../components/BottomNavigation';
 
@@ -24,7 +24,7 @@ interface Profile {
 }
 
 const Discover = () => {
-  const { getUserHeaders } = useAuth();
+  const { getUserHeaders, hasValidCredentials, refreshAuth, debugAuthState } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,7 +64,19 @@ const Discover = () => {
       } else {
         const errorData = await response.text();
         console.error('🔍 Frontend - Error response:', errorData);
-        toast.error('Failed to load profiles');
+        
+        if (response.status === 401) {
+          console.log('🔍 Frontend - Authentication failed, checking credentials...');
+          debugAuthState();
+          
+          if (hasValidCredentials()) {
+            toast.error('Authentication failed. Please refresh the page or try logging in again.');
+          } else {
+            toast.error('Please log in to view profiles');
+          }
+        } else {
+          toast.error('Failed to load profiles');
+        }
       }
     } catch (error) {
       console.error('🔍 Frontend - Fetch error:', error);
@@ -72,6 +84,13 @@ const Discover = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    console.log('🔍 Frontend - Manual refresh requested');
+    debugAuthState();
+    await refreshAuth();
+    fetchProfiles();
   };
 
   const handleSwipe = async (isLike: boolean) => {
@@ -146,10 +165,48 @@ const Discover = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="spinner w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Finding profiles for you...</p>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link to="/dashboard" className="flex items-center space-x-2 text-gray-600 hover:text-pink-500">
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Dashboard</span>
+              </Link>
+              <h1 className="text-xl font-bold gradient-text">Discover</h1>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleRefresh}
+                  disabled={true}
+                  className="p-2 text-gray-400 cursor-not-allowed"
+                  title="Loading..."
+                >
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                </button>
+                <button
+                  onClick={debugAuthState}
+                  className="p-2 text-gray-600 hover:text-blue-500 transition-colors"
+                  title="Debug auth state"
+                >
+                  <Info className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Loading State */}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-32 h-32 bg-gradient-to-br from-pink-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <RefreshCw className="w-16 h-16 text-pink-500 animate-spin" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading Profiles...</h2>
+            <p className="text-gray-600 mb-6">
+              Please wait while we fetch the latest profiles for you.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -167,7 +224,15 @@ const Discover = () => {
                 <span>Back to Dashboard</span>
               </Link>
               <h1 className="text-xl font-bold gradient-text">Discover</h1>
-              <div className="w-20"></div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={debugAuthState}
+                  className="p-2 text-gray-600 hover:text-blue-500 transition-colors"
+                  title="Debug auth state"
+                >
+                  <Info className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -213,6 +278,21 @@ const Discover = () => {
             </Link>
             <h1 className="text-xl font-bold gradient-text">Discover</h1>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="p-2 text-gray-600 hover:text-pink-500 transition-colors disabled:opacity-50"
+                title="Refresh profiles"
+              >
+                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={debugAuthState}
+                className="p-2 text-gray-600 hover:text-blue-500 transition-colors"
+                title="Debug auth state"
+              >
+                <Info className="w-5 h-5" />
+              </button>
               <Bell className="w-5 h-5 text-gray-600" />
             </div>
           </div>

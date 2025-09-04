@@ -30,6 +30,10 @@ interface AuthContextType {
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
+  getUserHeaders: () => Record<string, string>;
+  hasValidCredentials: () => boolean;
+  refreshAuth: () => Promise<void>;
+  debugAuthState: () => void;
 }
 
 interface RegisterData {
@@ -108,24 +112,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // If not admin, try regular user authentication check
-      console.log('🔍 Auth - Checking user authentication');
-      const userResponse = await fetch(`${API_URL}/api/me`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getUserHeaders()
+      // Check if user credentials are stored in localStorage
+      const storedUserCreds = localStorage.getItem('userCredentials');
+      if (storedUserCreds) {
+        try {
+          const userCredentials = JSON.parse(storedUserCreds);
+          console.log('🔍 Auth - Found stored user credentials, attempting re-authentication');
+          
+          // Use stored credentials to authenticate
+          const userResponse = await fetch(`${API_URL}/api/me`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-email': userCredentials.email,
+              'x-user-password': userCredentials.password
+            }
+          });
+
+          console.log('🔍 Auth - User re-authentication response status:', userResponse.status);
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            console.log('🔍 Auth - User re-authentication successful, user data:', userData.user);
+            setUser(userData.user);
+          } else {
+            console.log('🔍 Auth - User re-authentication failed, clearing invalid credentials');
+            localStorage.removeItem('userCredentials');
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('🔍 Auth - User re-authentication error:', error);
+          localStorage.removeItem('userCredentials');
+          setUser(null);
         }
-      });
-
-      console.log('🔍 Auth - User session response status:', userResponse.status);
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        console.log('🔍 Auth - User session valid, user data:', userData.user);
-        setUser(userData.user);
       } else {
-        console.log('🔍 Auth - User session invalid');
+        console.log('🔍 Auth - No stored user credentials found');
         setUser(null);
       }
     } catch (error) {
@@ -258,7 +279,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           'x-user-email': creds.email,
           'x-user-password': creds.password
         };
-        console.log('🔍 Headers - Generated headers for API call');
+        console.log('🔍 Headers - Generated headers for API call:', {
+          email: creds.email ? 'Present' : 'Missing',
+          password: creds.password ? 'Present' : 'Missing'
+        });
         return headers;
       } catch (error) {
         console.error('🔍 Headers - Failed to parse stored user credentials:', error);
@@ -269,14 +293,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // If no stored credentials, try to get from current user state
     if (user && user.email) {
       // This is a fallback - in production, credentials should always be stored
-      console.log('🔍 Headers - Using fallback user state for headers');
+      console.log('🔍 Headers - Using fallback user state for headers (not ideal)');
       return {
         'x-user-email': user.email,
         'x-user-password': 'stored-in-localstorage' // This won't work, but helps debug
       };
     }
     
-    console.log('🔍 Headers - No credentials available');
+    console.log('🔍 Headers - No credentials available - user will need to relogin');
     return {};
   };
 
@@ -285,6 +309,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clear all credentials
       localStorage.removeItem('adminCredentials');
       localStorage.removeItem('userCredentials');
+      console.log('🔍 Logout - All credentials cleared from localStorage');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -300,9 +325,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Check if user has valid credentials stored
+  const hasValidCredentials = () => {
+    const storedCreds = localStorage.getItem('userCredentials');
+    if (storedCreds) {
+      try {
+        const creds = JSON.parse(storedCreds);
+        return creds.email && creds.password;
+      } catch (error) {
+        return false;
+      }
+    }
+    return false;
+  };
+
+  // Force refresh authentication state (useful for debugging)
+  const refreshAuth = async () => {
+    console.log('🔍 Refresh Auth - Manually refreshing authentication state');
+    setLoading(true);
+    await checkAuth();
+  };
+
+  // Debug function to show current auth state
+  const debugAuthState = () => {
+    const storedCreds = localStorage.getItem('userCredentials');
+    const storedAdminCreds = localStorage.getItem('adminCredentials');
+    
+    console.log('🔍 Debug Auth State:', {
+      user: user ? { id: user.id, email: user.email, isAdmin: user.isAdmin } : null,
+      loading,
+      hasUserCredentials: !!storedCreds,
+      hasAdminCredentials: !!storedAdminCreds,
+      userCredentials: storedCreds ? JSON.parse(storedCreds) : null,
+      adminCredentials: storedAdminCreds ? JSON.parse(storedAdminCreds) : null
+    });
+  };
+
+  // Initial authentication check on mount
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Auto-re-authenticate if user has credentials but no user state (handles page refresh)
+  useEffect(() => {
+    if (!user && !loading && hasValidCredentials()) {
+      console.log('🔍 Auto-re-auth - User has credentials but no user state, attempting re-authentication');
+      checkAuth();
+    }
+  }, [user, loading]);
 
   const value = {
     user,
@@ -315,6 +385,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
     checkAuth,
     getUserHeaders,
+    hasValidCredentials,
+    refreshAuth,
+    debugAuthState,
   };
 
   return (
