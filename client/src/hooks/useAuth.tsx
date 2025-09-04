@@ -188,8 +188,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const data = await response.json();
       console.log('🔍 Login - Response data:', data);
+      console.log('🔍 Login - Response data type:', typeof data);
+      console.log('🔍 Login - Response data keys:', Object.keys(data));
       console.log('🔍 Login - Token in response:', data.token ? 'YES' : 'NO');
       console.log('🔍 Login - Token length:', data.token ? data.token.length : 0);
+      console.log('🔍 Login - Token value:', data.token);
 
       if (response.ok) {
         console.log('🔍 Login - Login successful, user data:', data.user);
@@ -202,6 +205,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           console.error('🔍 Login - NO TOKEN RECEIVED FROM SERVER!');
           console.error('🔍 Login - Response data keys:', Object.keys(data));
+          console.error('🔍 Login - Full response data:', data);
+          
+          // Try to extract token from different possible locations
+          if (data.data && data.data.token) {
+            console.log('🔍 Login - Found token in data.data.token');
+            localStorage.setItem('jwtToken', data.data.token);
+          } else if (data.user && data.user.token) {
+            console.log('🔍 Login - Found token in data.user.token');
+            localStorage.setItem('jwtToken', data.user.token);
+          } else {
+            console.error('🔍 Login - Token not found in any expected location');
+          }
         }
         
         // Store user data
@@ -314,11 +329,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Get JWT token for API calls
   const getAuthHeaders = () => {
     const token = localStorage.getItem('jwtToken');
+    console.log('🔍 JWT Headers - Checking localStorage for token:', token ? 'FOUND' : 'NOT FOUND');
+    console.log('🔍 JWT Headers - Token length:', token ? token.length : 0);
+    console.log('🔍 JWT Headers - Token preview:', token ? token.substring(0, 20) + '...' : 'N/A');
+    
     if (token) {
       const headers = {
         'Authorization': `Bearer ${token}`
       };
-      console.log('🔍 JWT Headers - Generated Authorization header');
+      console.log('🔍 JWT Headers - Generated Authorization header:', headers);
       return headers;
     }
     
