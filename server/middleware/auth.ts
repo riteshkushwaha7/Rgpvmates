@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
 import { users } from '../shared/schema.js';
 import { eq } from 'drizzle-orm';
@@ -13,44 +12,40 @@ declare global {
   }
 }
 
-// Header-based authentication middleware - reliable for production
+// SIMPLE USER ID BASED AUTHENTICATION - NO SESSIONS, NO PASSWORDS
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let user = null;
-
-    // Get credentials from headers
+    // Get user ID from headers
+    const userId = req.headers['x-user-id'] as string;
     const userEmail = req.headers['x-user-email'] as string;
-    const userPassword = req.headers['x-user-password'] as string;
 
-    if (userEmail && userPassword) {
-      console.log('🔍 Auth middleware - Header authentication check:', { 
-        userEmail: userEmail ? 'Provided' : 'Missing',
-        userPassword: userPassword ? 'Provided' : 'Missing'
+    if (!userId || !userEmail) {
+      console.log('🔍 Auth middleware - Missing user ID or email:', { 
+        userId: !!userId, 
+        userEmail: !!userEmail 
       });
-
-      const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
-      if (headerUser.length > 0) {
-        const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
-        if (isValidPassword) {
-          user = headerUser[0];
-          console.log('✅ Auth middleware passed - Header credentials verified');
-        } else {
-          console.log('❌ Auth middleware - Invalid password for user:', userEmail);
-        }
-      } else {
-        console.log('❌ Auth middleware - User not found:', userEmail);
-      }
-    } else {
-      console.log('🔍 Auth middleware - Missing credentials in headers:', {
-        userEmail: !!userEmail,
-        userPassword: !!userPassword
-      });
+      return res.status(401).json({ error: 'User ID and email required' });
     }
 
-    // If no authentication method worked
-    if (!user) {
-      console.log('❌ Auth middleware failed - No valid authentication');
-      return res.status(401).json({ error: 'Authentication required' });
+    console.log('🔍 Auth middleware - Validating user:', { userId, userEmail });
+
+    // Get user from database by ID
+    const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    if (userResult.length === 0) {
+      console.log('❌ Auth middleware - User not found in database:', userId);
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const user = userResult[0];
+
+    // Verify email matches
+    if (user.email !== userEmail) {
+      console.log('❌ Auth middleware - Email mismatch:', { 
+        provided: userEmail, 
+        stored: user.email 
+      });
+      return res.status(401).json({ error: 'Invalid user credentials' });
     }
 
     // Check if user is approved
@@ -59,6 +54,8 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       return res.status(403).json({ error: 'Account pending approval' });
     }
 
+    console.log('✅ Auth middleware passed - User validated:', { userId, email: user.email });
+    
     // Attach user to request
     req.user = user;
     next();
@@ -69,21 +66,21 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-// Optional auth middleware - header-based only
+// Optional auth middleware - user ID based only
 export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let user = null;
 
-    // Try header-based authentication
+    // Try user ID based authentication
+    const userId = req.headers['x-user-id'] as string;
     const userEmail = req.headers['x-user-email'] as string;
-    const userPassword = req.headers['x-user-password'] as string;
 
-    if (userEmail && userPassword) {
-      const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
-      if (headerUser.length > 0) {
-        const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
-        if (isValidPassword) {
-          user = headerUser[0];
+    if (userId && userEmail) {
+      const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      if (userResult.length > 0) {
+        const dbUser = userResult[0];
+        if (dbUser.email === userEmail) {
+          user = dbUser;
         }
       }
     }

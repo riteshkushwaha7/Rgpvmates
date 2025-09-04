@@ -112,41 +112,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Check if user credentials are stored in localStorage
-      const storedUserCreds = localStorage.getItem('userCredentials');
-      if (storedUserCreds) {
+      // Check if user data is stored in localStorage
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
         try {
-          const userCredentials = JSON.parse(storedUserCreds);
-          console.log('🔍 Auth - Found stored user credentials, attempting re-authentication');
+          const userData = JSON.parse(storedUserData);
+          console.log('🔍 Auth - Found stored user data, restoring user session');
           
-          // Use stored credentials to authenticate
+          // Validate stored user data by calling /api/me
           const userResponse = await fetch(`${API_URL}/api/me`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              'x-user-email': userCredentials.email,
-              'x-user-password': userCredentials.password
+              'x-user-id': userData.id,
+              'x-user-email': userData.email
             }
           });
 
-          console.log('🔍 Auth - User re-authentication response status:', userResponse.status);
+          console.log('🔍 Auth - User validation response status:', userResponse.status);
 
           if (userResponse.ok) {
-            const userData = await userResponse.json();
-            console.log('🔍 Auth - User re-authentication successful, user data:', userData.user);
-            setUser(userData.user);
+            const responseData = await userResponse.json();
+            console.log('🔍 Auth - User validation successful, restoring user session');
+            setUser(responseData.user);
           } else {
-            console.log('🔍 Auth - User re-authentication failed, clearing invalid credentials');
-            localStorage.removeItem('userCredentials');
+            console.log('🔍 Auth - User validation failed, clearing invalid data');
+            localStorage.removeItem('userData');
             setUser(null);
           }
         } catch (error) {
-          console.error('🔍 Auth - User re-authentication error:', error);
-          localStorage.removeItem('userCredentials');
+          console.error('🔍 Auth - User validation error:', error);
+          localStorage.removeItem('userData');
           setUser(null);
         }
       } else {
-        console.log('🔍 Auth - No stored user credentials found');
+        console.log('🔍 Auth - No stored user data found');
         setUser(null);
       }
     } catch (error) {
@@ -179,10 +179,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (response.ok) {
         console.log('🔍 Login - Login successful, user data:', data.user);
         
-        // Store user credentials for header-based authentication (CRITICAL for production)
-        const userCredentials = { email, password };
-        localStorage.setItem('userCredentials', JSON.stringify(userCredentials));
-        console.log('🔍 Login - Credentials stored in localStorage for header auth');
+        // Store user data for authentication (NO PASSWORD STORED)
+        const userData = { 
+          id: data.user.id,
+          email: data.user.email,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          age: data.user.age,
+          gender: data.user.gender,
+          college: data.user.college,
+          branch: data.user.branch,
+          graduationYear: data.user.graduationYear,
+          profileImageUrl: data.user.profileImageUrl,
+          isApproved: data.user.isApproved,
+          isAdmin: data.user.isAdmin,
+          paymentDone: data.user.paymentDone,
+          likedUsers: data.user.likedUsers,
+          dislikedUsers: data.user.dislikedUsers,
+          blockedUsers: data.user.blockedUsers
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        console.log('🔍 Login - User data stored in localStorage for authentication');
         
         setUser(data.user);
         toast.success('Login successful!');
@@ -269,47 +286,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Get user headers for API calls - always return credentials if available
+  // Get user headers for API calls - using user ID + email (NO PASSWORD)
   const getUserHeaders = () => {
-    const storedCreds = localStorage.getItem('userCredentials');
-    if (storedCreds) {
-      try {
-        const creds = JSON.parse(storedCreds);
-        const headers = {
-          'x-user-email': creds.email,
-          'x-user-password': creds.password
-        };
-        console.log('🔍 Headers - Generated headers for API call:', {
-          email: creds.email ? 'Present' : 'Missing',
-          password: creds.password ? 'Present' : 'Missing'
-        });
-        return headers;
-      } catch (error) {
-        console.error('🔍 Headers - Failed to parse stored user credentials:', error);
-        return {};
-      }
-    }
-    
-    // If no stored credentials, try to get from current user state
-    if (user && user.email) {
-      // This is a fallback - in production, credentials should always be stored
-      console.log('🔍 Headers - Using fallback user state for headers (not ideal)');
-      return {
-        'x-user-email': user.email,
-        'x-user-password': 'stored-in-localstorage' // This won't work, but helps debug
+    if (user && user.id && user.email) {
+      const headers = {
+        'x-user-id': user.id,
+        'x-user-email': user.email
       };
+      console.log('🔍 Headers - Generated headers for API call:', {
+        userId: user.id ? 'Present' : 'Missing',
+        email: user.email ? 'Present' : 'Missing'
+      });
+      return headers;
     }
     
-    console.log('🔍 Headers - No credentials available - user will need to relogin');
+    console.log('🔍 Headers - No user data available - user will need to relogin');
     return {};
   };
 
   const logout = async () => {
     try {
-      // Clear all credentials
+      // Clear all stored data
       localStorage.removeItem('adminCredentials');
-      localStorage.removeItem('userCredentials');
-      console.log('🔍 Logout - All credentials cleared from localStorage');
+      localStorage.removeItem('userData');
+      console.log('🔍 Logout - All user data cleared from localStorage');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -325,13 +325,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Check if user has valid credentials stored
+  // Check if user has valid data stored
   const hasValidCredentials = () => {
-    const storedCreds = localStorage.getItem('userCredentials');
-    if (storedCreds) {
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
       try {
-        const creds = JSON.parse(storedCreds);
-        return creds.email && creds.password;
+        const userData = JSON.parse(storedUserData);
+        return userData.id && userData.email;
       } catch (error) {
         return false;
       }
@@ -348,15 +348,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Debug function to show current auth state
   const debugAuthState = () => {
-    const storedCreds = localStorage.getItem('userCredentials');
+    const storedUserData = localStorage.getItem('userData');
     const storedAdminCreds = localStorage.getItem('adminCredentials');
     
     console.log('🔍 Debug Auth State:', {
       user: user ? { id: user.id, email: user.email, isAdmin: user.isAdmin } : null,
       loading,
-      hasUserCredentials: !!storedCreds,
+      hasUserData: !!storedUserData,
       hasAdminCredentials: !!storedAdminCreds,
-      userCredentials: storedCreds ? JSON.parse(storedCreds) : null,
+      userData: storedUserData ? JSON.parse(storedUserData) : null,
       adminCredentials: storedAdminCreds ? JSON.parse(storedAdminCreds) : null
     });
   };

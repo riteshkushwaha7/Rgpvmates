@@ -48,9 +48,9 @@ const Discover = () => {
     try {
       setLoading(true);
       
-      // Check if user has valid credentials before making API call
+      // Check if user has valid data before making API call
       if (!hasValidCredentials()) {
-        console.error('🔍 Frontend - No valid credentials found, cannot fetch profiles');
+        console.error('🔍 Frontend - No valid user data found, cannot fetch profiles');
         toast.error('Authentication required. Please log in again.');
         setLoading(false);
         return;
@@ -61,7 +61,7 @@ const Discover = () => {
       const headers = getUserHeaders();
       console.log('🔍 Frontend - Sending headers:', headers);
       
-      if (!headers['x-user-email'] || !headers['x-user-password']) {
+      if (!headers['x-user-id'] || !headers['x-user-email']) {
         console.error('🔍 Frontend - Invalid headers generated:', headers);
         toast.error('Authentication error. Please log in again.');
         setLoading(false);

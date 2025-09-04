@@ -1,22 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import session from 'express-session';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
 import { db } from './db.js';
 import { routes } from './routes.js';
 import { setupWebSocket } from './websocket.js';
-
-// Extend session interface to include custom properties
-declare module 'express-session' {
-  interface SessionData {
-    userId?: string;
-    email?: string;
-    isAdmin?: boolean;
-    testValue?: string;
-  }
-}
 
 dotenv.config();
 
@@ -51,39 +40,17 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-email', 'x-user-password', 'x-admin-username', 'x-admin-password']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'x-user-email', 'x-admin-username', 'x-admin-password']
 }));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ROBUST SESSION CONFIGURATION - Optimized for Railway
-const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: true, // Changed to true for better persistence
-  saveUninitialized: true, // Changed to true to save sessions immediately
-  cookie: {
-    secure: false, // Railway handles HTTPS, set to false to avoid issues
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days - longer session
-    sameSite: 'lax', // Use lax for Railway compatibility
-  },
-  name: 'rgpvmates.sid', // Custom session name
-});
-
-console.log('🔧 Session configured with robust settings for Railway');
+// NO SESSION MANAGEMENT - Using localStorage + user ID validation
+console.log('🔧 NO SESSION - Using localStorage + user ID validation');
 console.log('🔧 DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not Set');
 console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
-console.log('🔧 SESSION_SECRET:', process.env.SESSION_SECRET ? 'Set' : 'Not Set');
-console.log('🔧 Session cookie settings:', {
-  secure: false,
-  httpOnly: true,
-  maxAge: '7 days',
-  sameSite: 'lax'
-});
-
-app.use(sessionMiddleware);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

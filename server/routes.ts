@@ -69,35 +69,12 @@ router.get('/test', async (req, res) => {
   }
 });
 
-// Session test endpoint
-router.get('/session-test', (req, res) => {
-  // Test setting a session value
-  if (!req.session.testValue) {
-    req.session.testValue = 'Test_' + Date.now();
-    console.log('🔧 Set test session value:', req.session.testValue);
-  }
-  
-  // Force save to test persistence
-  req.session.save((err) => {
-    if (err) {
-      console.error('❌ Session save error:', err);
-      return res.status(500).json({ error: 'Session save failed', details: err.message });
-    }
-    
-    console.log('✅ Session saved successfully');
-    
-    res.json({
-      sessionId: req.sessionID,
-      sessionData: {
-        userId: req.session.userId,
-        email: req.session.email,
-        isAdmin: req.session.isAdmin,
-        testValue: req.session.testValue
-      },
-      sessionKeys: Object.keys(req.session),
-      timestamp: new Date().toISOString(),
-      message: 'Session test completed'
-    });
+// NO SESSION TEST - Using localStorage + user ID validation
+router.get('/auth-status', (req, res) => {
+  res.json({ 
+    message: 'Authentication system active',
+    method: 'localStorage + user ID validation',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -152,13 +129,10 @@ router.get('/me', requireAuth, async (req, res) => {
 });
 
 // Update user profile
-router.put('/me', async (req, res) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
+router.put('/me', requireAuth, async (req, res) => {
   try {
     const { age, college, branch, graduationYear, bio } = req.body;
+    const user = req.user;
     
     // Update user data
     const updateData: any = {};
@@ -170,7 +144,7 @@ router.put('/me', async (req, res) => {
     if (Object.keys(updateData).length > 0) {
       await db.update(users)
         .set(updateData)
-        .where(eq(users.id, req.session.userId));
+        .where(eq(users.id, user.id));
     }
     
     // Get updated user data
@@ -188,7 +162,7 @@ router.put('/me', async (req, res) => {
       isApproved: users.isApproved,
       isAdmin: users.isAdmin,
       paymentDone: users.paymentDone,
-    }).from(users).where(eq(users.id, req.session.userId)).limit(1);
+    }).from(users).where(eq(users.id, user.id)).limit(1);
     
     res.json({ user: updatedUser[0] });
   } catch (error) {
