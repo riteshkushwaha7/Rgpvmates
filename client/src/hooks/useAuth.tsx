@@ -111,7 +111,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // If not admin, try regular user session check
       console.log('🔍 Auth - Checking user session');
       const userResponse = await fetch(`${API_URL}/api/me`, {
+        method: 'GET',
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
       console.log('🔍 Auth - User session response status:', userResponse.status);
@@ -139,6 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -153,9 +158,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (response.ok) {
         console.log('🔍 Login - Login successful, user data:', data.user);
-        // Store user credentials for header-based authentication
+        
+        // Store user credentials for header-based authentication (CRITICAL for production)
         const userCredentials = { email, password };
         localStorage.setItem('userCredentials', JSON.stringify(userCredentials));
+        console.log('🔍 Login - Credentials stored in localStorage for header auth');
         
         setUser(data.user);
         toast.success('Login successful!');
@@ -242,7 +249,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Get user headers for API calls
+  // Get user headers for API calls - always return credentials if available
   const getUserHeaders = () => {
     const storedCreds = localStorage.getItem('userCredentials');
     if (storedCreds) {
@@ -252,13 +259,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           'x-user-email': creds.email,
           'x-user-password': creds.password
         };
-        console.log('🔍 Headers - Generated headers:', headers);
+        console.log('🔍 Headers - Generated headers for API call');
         return headers;
       } catch (error) {
         console.error('🔍 Headers - Failed to parse stored user credentials:', error);
+        return {};
       }
     }
-    console.log('🔍 Headers - No stored credentials found');
+    
+    // If no stored credentials, try to get from current user state
+    if (user && user.email) {
+      // This is a fallback - in production, credentials should always be stored
+      console.log('🔍 Headers - Using fallback user state for headers');
+      return {
+        'x-user-email': user.email,
+        'x-user-password': 'stored-in-localstorage' // This won't work, but helps debug
+      };
+    }
+    
+    console.log('🔍 Headers - No credentials available');
     return {};
   };
 
@@ -305,3 +324,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+

@@ -44,6 +44,8 @@ const Discover = () => {
       console.log('🔍 Frontend - User headers:', getUserHeaders());
       
       const response = await fetch(`${config.API_URL}/api/discover`, {
+        method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...getUserHeaders()

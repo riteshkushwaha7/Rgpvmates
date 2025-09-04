@@ -137,6 +137,19 @@ router.post('/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.email = user.email;
     req.session.isAdmin = user.isAdmin;
+    
+    // Force save session to ensure it's persisted
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Session save error during login:', err);
+      } else {
+        console.log('✅ Session saved successfully during login:', {
+          sessionId: req.sessionID,
+          userId: req.session.userId,
+          email: req.session.email
+        });
+      }
+    });
 
     res.json({
       message: 'Login successful',

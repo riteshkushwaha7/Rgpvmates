@@ -51,7 +51,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-email', 'x-user-password']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-email', 'x-user-password', 'x-admin-username', 'x-admin-password']
 }));
 
 // Body parsing middleware
@@ -64,10 +64,10 @@ const sessionMiddleware = session({
   resave: true, // Changed to true for better persistence
   saveUninitialized: true, // Changed to true to save sessions immediately
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Set to true in production for HTTPS
+    secure: false, // Railway handles HTTPS, set to false to avoid issues
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days - longer session
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax', // Use lax for Railway compatibility
   },
   name: 'rgpvmates.sid', // Custom session name
 });
@@ -76,6 +76,12 @@ console.log('🔧 Session configured with robust settings for Railway');
 console.log('🔧 DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not Set');
 console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
 console.log('🔧 SESSION_SECRET:', process.env.SESSION_SECRET ? 'Set' : 'Not Set');
+console.log('🔧 Session cookie settings:', {
+  secure: false,
+  httpOnly: true,
+  maxAge: '7 days',
+  sameSite: 'lax'
+});
 
 app.use(sessionMiddleware);
 

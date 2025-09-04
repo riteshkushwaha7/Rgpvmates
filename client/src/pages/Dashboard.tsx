@@ -30,6 +30,8 @@ const Dashboard = () => {
     try {
       // Fetch matches count
       const matchesResponse = await fetch(`${config.API_URL}/api/matching/matches`, {
+        method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...getUserHeaders()
@@ -42,6 +44,8 @@ const Dashboard = () => {
 
       // Fetch unread messages count
       const messagesResponse = await fetch(`${config.API_URL}/api/messages/unread/count`, {
+        method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...getUserHeaders()

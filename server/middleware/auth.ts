@@ -13,32 +13,19 @@ declare global {
   }
 }
 
-// Hybrid authentication middleware - supports both session and header-based auth
+// Hybrid authentication middleware - prioritizes header-based auth in production
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let user = null;
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    // First, try session-based authentication
-    if (req.session && req.session.userId) {
-      console.log('🔍 Auth middleware - Session check:', { 
-        userId: req.session.userId,
-        email: req.session.email 
-      });
-
-      const sessionUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
-      if (sessionUser.length > 0) {
-        user = sessionUser[0];
-        console.log('✅ Auth middleware passed - Session verified');
-      }
-    }
-
-    // If session auth failed, try header-based authentication
-    if (!user) {
+    // In production, prioritize header-based authentication (more reliable)
+    if (isProduction) {
       const userEmail = req.headers['x-user-email'] as string;
       const userPassword = req.headers['x-user-password'] as string;
 
       if (userEmail && userPassword) {
-        console.log('🔍 Auth middleware - Header check:', { 
+        console.log('🔍 Auth middleware - Production header check:', { 
           userEmail: userEmail ? 'Provided' : 'Missing',
           userPassword: userPassword ? 'Provided' : 'Missing'
         });
@@ -48,7 +35,55 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
           const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
           if (isValidPassword) {
             user = headerUser[0];
-            console.log('✅ Auth middleware passed - Header credentials verified');
+            console.log('✅ Auth middleware passed - Production header credentials verified');
+          }
+        }
+      }
+    }
+
+    // If header auth failed or in development, try session-based authentication
+    if (!user) {
+      if (req.session && req.session.userId) {
+        console.log('🔍 Auth middleware - Session check:', { 
+          userId: req.session.userId,
+          email: req.session.email,
+          sessionId: req.sessionID,
+          sessionKeys: Object.keys(req.session)
+        });
+
+        const sessionUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
+        if (sessionUser.length > 0) {
+          user = sessionUser[0];
+          console.log('✅ Auth middleware passed - Session verified');
+        } else {
+          console.log('❌ Auth middleware - User not found in database for session userId:', req.session.userId);
+        }
+      } else {
+        console.log('🔍 Auth middleware - No session found:', {
+          hasSession: !!req.session,
+          sessionId: req.sessionID,
+          sessionKeys: req.session ? Object.keys(req.session) : 'No session'
+        });
+      }
+
+      // If session auth failed, try header-based authentication as fallback
+      if (!user) {
+        const userEmail = req.headers['x-user-email'] as string;
+        const userPassword = req.headers['x-user-password'] as string;
+
+        if (userEmail && userPassword) {
+          console.log('🔍 Auth middleware - Fallback header check:', { 
+            userEmail: userEmail ? 'Provided' : 'Missing',
+            userPassword: userPassword ? 'Provided' : 'Missing'
+          });
+
+          const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
+          if (headerUser.length > 0) {
+            const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
+            if (isValidPassword) {
+              user = headerUser[0];
+              console.log('✅ Auth middleware passed - Fallback header credentials verified');
+            }
           }
         }
       }
