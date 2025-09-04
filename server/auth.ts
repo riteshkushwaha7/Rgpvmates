@@ -135,6 +135,8 @@ router.post('/login', async (req, res) => {
                     // Generate JWT token for authentication
         const token = generateToken(user.id, user.email);
         console.log('✅ Login successful - JWT token generated');
+        console.log('🔍 Login - Token length:', token.length);
+        console.log('🔍 Login - JWT_SECRET available:', process.env.JWT_SECRET ? 'YES' : 'NO');
 
         res.json({
           message: 'Login successful',

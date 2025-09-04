@@ -69,12 +69,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const API_URL = config.API_URL;
 
+  // Check authentication status
   const checkAuth = async () => {
     try {
       console.log('🔍 Auth - Starting authentication check');
-      console.log('🔍 Auth - API URL:', API_URL);
-      
-      // Check if admin credentials are stored
+      setLoading(true);
+
+      // Check admin credentials first
       const storedAdminCreds = localStorage.getItem('adminCredentials');
       if (storedAdminCreds) {
         try {
@@ -117,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (storedToken) {
         try {
           console.log('🔍 Auth - Found stored JWT token, validating');
+          console.log('🔍 Auth - Token length:', storedToken.length);
           
           // Validate JWT token by calling /api/me
           const userResponse = await fetch(`${API_URL}/api/me`, {
@@ -134,15 +136,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('🔍 Auth - JWT validation successful, restoring user session');
             setUser(responseData.user);
           } else {
-            console.log('🔍 Auth - JWT validation failed, clearing invalid token');
-            localStorage.removeItem('jwtToken');
-            localStorage.removeItem('userData');
-            setUser(null);
+            console.log('🔍 Auth - JWT validation failed, status:', userResponse.status);
+            const errorText = await userResponse.text();
+            console.log('🔍 Auth - JWT validation error response:', errorText);
+            
+            // Don't clear token immediately - might be server issue
+            if (userResponse.status === 500) {
+              console.log('🔍 Auth - Server error, keeping token for retry');
+              // Keep the token but set user to null temporarily
+              setUser(null);
+            } else {
+              console.log('🔍 Auth - Clearing invalid token');
+              localStorage.removeItem('jwtToken');
+              localStorage.removeItem('userData');
+              setUser(null);
+            }
           }
         } catch (error) {
           console.error('🔍 Auth - JWT validation error:', error);
-          localStorage.removeItem('jwtToken');
-          localStorage.removeItem('userData');
+          // Don't clear token on network errors
+          console.log('🔍 Auth - Network error, keeping token for retry');
           setUser(null);
         }
       } else {
@@ -175,6 +188,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const data = await response.json();
       console.log('🔍 Login - Response data:', data);
+      console.log('🔍 Login - Token in response:', data.token ? 'YES' : 'NO');
+      console.log('🔍 Login - Token length:', data.token ? data.token.length : 0);
 
       if (response.ok) {
         console.log('🔍 Login - Login successful, user data:', data.user);
@@ -183,6 +198,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.token) {
           localStorage.setItem('jwtToken', data.token);
           console.log('🔍 Login - JWT token stored in localStorage');
+          console.log('🔍 Login - Token stored:', localStorage.getItem('jwtToken') ? 'YES' : 'NO');
+        } else {
+          console.error('🔍 Login - NO TOKEN RECEIVED FROM SERVER!');
+          console.error('🔍 Login - Response data keys:', Object.keys(data));
         }
         
         // Store user data

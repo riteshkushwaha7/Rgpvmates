@@ -91,17 +91,40 @@ const Discover = () => {
           console.log('🔍 Frontend - Authentication failed, checking credentials...');
           debugAuthState();
           
+          // Try to refresh auth before giving up
           if (hasValidCredentials()) {
-            toast.error('Authentication failed. Please refresh the page or try logging in again.');
-          } else {
-            toast.error('Please log in to view profiles');
+            console.log('🔍 Frontend - Attempting to refresh authentication...');
+            await refreshAuth();
+            
+            // If refresh successful, try fetching profiles again
+            if (hasValidCredentials()) {
+              console.log('🔍 Frontend - Auth refreshed, retrying profile fetch...');
+              setTimeout(() => fetchProfiles(), 1000); // Retry after 1 second
+              return;
+            }
           }
+          
+          toast.error('Authentication failed. Please refresh the page or try logging in again.');
+        } else if (response.status === 500) {
+          console.log('🔍 Frontend - Server error, will retry...');
+          toast.error('Server error. Retrying in 3 seconds...');
+          setTimeout(() => fetchProfiles(), 3000); // Retry after 3 seconds
+          return;
         } else {
           toast.error('Failed to load profiles');
         }
       }
     } catch (error) {
       console.error('🔍 Frontend - Fetch error:', error);
+      
+      // Network errors - retry after delay
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.log('🔍 Frontend - Network error, retrying in 3 seconds...');
+        toast.error('Network error. Retrying in 3 seconds...');
+        setTimeout(() => fetchProfiles(), 3000);
+        return;
+      }
+      
       toast.error('Failed to load profiles');
     } finally {
       setLoading(false);
