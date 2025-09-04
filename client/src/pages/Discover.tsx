@@ -24,7 +24,7 @@ interface Profile {
 }
 
 const Discover = () => {
-  const { getUserHeaders, hasValidCredentials, refreshAuth, debugAuthState } = useAuth();
+  const { getUserHeaders, hasValidCredentials, refreshAuth, debugAuthState, loading: authLoading, isAuthenticated } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -34,17 +34,39 @@ const Discover = () => {
   const [showExtendedInfo, setShowExtendedInfo] = useState(false);
 
   useEffect(() => {
-    fetchProfiles();
-  }, []);
+    // Only fetch profiles when authentication is complete and user is authenticated
+    if (!authLoading && isAuthenticated) {
+      console.log('🔍 Discover - Auth complete, fetching profiles');
+      fetchProfiles();
+    } else if (!authLoading && !isAuthenticated) {
+      console.log('🔍 Discover - Auth complete, user not authenticated');
+      setLoading(false);
+    }
+  }, [authLoading, isAuthenticated]);
 
   const fetchProfiles = async () => {
     try {
       setLoading(true);
+      
+      // Check if user has valid credentials before making API call
+      if (!hasValidCredentials()) {
+        console.error('🔍 Frontend - No valid credentials found, cannot fetch profiles');
+        toast.error('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
       console.log('🔍 Frontend - Fetching profiles from:', `${config.API_URL}/api/discover`);
-      console.log('🔍 Frontend - User headers:', getUserHeaders());
       
       const headers = getUserHeaders();
       console.log('🔍 Frontend - Sending headers:', headers);
+      
+      if (!headers['x-user-email'] || !headers['x-user-password']) {
+        console.error('🔍 Frontend - Invalid headers generated:', headers);
+        toast.error('Authentication error. Please log in again.');
+        setLoading(false);
+        return;
+      }
       
       const response = await fetch(`${config.API_URL}/api/discover`, {
         method: 'GET',
@@ -89,12 +111,23 @@ const Discover = () => {
   const handleRefresh = async () => {
     console.log('🔍 Frontend - Manual refresh requested');
     debugAuthState();
+    
+    if (!hasValidCredentials()) {
+      toast.error('Authentication required. Please log in again.');
+      return;
+    }
+    
     await refreshAuth();
     fetchProfiles();
   };
 
   const handleSwipe = async (isLike: boolean) => {
     if (currentIndex >= profiles.length || swiping) return;
+
+    if (!hasValidCredentials()) {
+      toast.error('Authentication required. Please log in again.');
+      return;
+    }
 
     setSwiping(true);
     const profile = profiles[currentIndex];
@@ -163,6 +196,49 @@ const Discover = () => {
     setShowExtendedInfo(true);
   };
 
+  // Show authentication loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link to="/dashboard" className="flex items-center space-x-2 text-gray-600 hover:text-pink-500">
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Dashboard</span>
+              </Link>
+              <h1 className="text-xl font-bold gradient-text">Discover</h1>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={debugAuthState}
+                  className="p-2 text-gray-600 hover:text-blue-500 transition-colors"
+                  title="Debug auth state"
+                >
+                  <Info className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Authentication Loading State */}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-32 h-32 bg-gradient-to-br from-pink-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <RefreshCw className="w-16 h-16 text-pink-500 animate-spin" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Authenticating...</h2>
+            <p className="text-gray-600 mb-6">
+              Please wait while we verify your account.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show profiles loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
@@ -196,10 +272,10 @@ const Discover = () => {
           </div>
         </header>
 
-        {/* Loading State */}
+        {/* Profiles Loading State */}
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="w-32 h-32 bg-gradient-to-br from-pink-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-32 h-32 bg-gradient-to-br from-pink-50 via-white to-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <RefreshCw className="w-16 h-16 text-pink-500 animate-spin" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading Profiles...</h2>
@@ -212,7 +288,8 @@ const Discover = () => {
     );
   }
 
-  if (currentIndex >= profiles.length) {
+  // Show not authenticated state
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
         {/* Header */}
@@ -237,6 +314,61 @@ const Discover = () => {
           </div>
         </header>
 
+        {/* Not Authenticated State */}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-32 h-32 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <X className="w-16 h-16 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">
+              Please log in to view profiles.
+            </p>
+            <Link
+              to="/login"
+              className="gradient-button text-white px-6 py-3 rounded-full font-semibold inline-block"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentIndex >= profiles.length) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link to="/dashboard" className="flex items-center space-x-2 text-gray-600 hover:text-pink-500">
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Dashboard</span>
+              </Link>
+              <h1 className="text-xl font-bold gradient-text">Discover</h1>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="p-2 text-gray-600 hover:text-pink-500 transition-colors disabled:opacity-50"
+                  title="Refresh profiles"
+                >
+                  <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                </button>
+                <button
+                  onClick={debugAuthState}
+                  className="p-2 text-gray-600 hover:text-blue-500 transition-colors"
+                  title="Debug auth state"
+                >
+                  <Info className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
         {/* No More Profiles */}
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -249,8 +381,12 @@ const Discover = () => {
             </p>
             <button
               onClick={() => {
-                setCurrentIndex(0);
-                fetchProfiles();
+                if (hasValidCredentials()) {
+                  setCurrentIndex(0);
+                  fetchProfiles();
+                } else {
+                  toast.error('Authentication required. Please log in again.');
+                }
               }}
               className="gradient-button text-white px-6 py-3 rounded-full font-semibold"
             >
