@@ -138,7 +138,7 @@ router.post('/login', async (req, res) => {
         console.log('🔍 Login - Token length:', token.length);
         console.log('🔍 Login - JWT_SECRET available:', process.env.JWT_SECRET ? 'YES' : 'NO');
 
-        res.json({
+        const responseData = {
           message: 'Login successful',
           token: token, // JWT token for authentication
           user: {
@@ -159,7 +159,11 @@ router.post('/login', async (req, res) => {
             dislikedUsers: user.dislikedUsers,
             blockedUsers: user.blockedUsers,
           }
-        });
+        };
+        
+        console.log('🔍 Login - Sending response with token:', responseData.token ? 'YES' : 'NO');
+        console.log('🔍 Login - Response data keys:', Object.keys(responseData));
+        res.json(responseData);
 
   } catch (error) {
     console.error('Login error:', error);
