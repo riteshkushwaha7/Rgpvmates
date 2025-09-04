@@ -13,80 +13,38 @@ declare global {
   }
 }
 
-// Hybrid authentication middleware - prioritizes header-based auth in production
+// Header-based authentication middleware - reliable for production
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let user = null;
-    const isProduction = process.env.NODE_ENV === 'production';
 
-    // In production, prioritize header-based authentication (more reliable)
-    if (isProduction) {
-      const userEmail = req.headers['x-user-email'] as string;
-      const userPassword = req.headers['x-user-password'] as string;
+    // Get credentials from headers
+    const userEmail = req.headers['x-user-email'] as string;
+    const userPassword = req.headers['x-user-password'] as string;
 
-      if (userEmail && userPassword) {
-        console.log('🔍 Auth middleware - Production header check:', { 
-          userEmail: userEmail ? 'Provided' : 'Missing',
-          userPassword: userPassword ? 'Provided' : 'Missing'
-        });
+    if (userEmail && userPassword) {
+      console.log('🔍 Auth middleware - Header authentication check:', { 
+        userEmail: userEmail ? 'Provided' : 'Missing',
+        userPassword: userPassword ? 'Provided' : 'Missing'
+      });
 
-        const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
-        if (headerUser.length > 0) {
-          const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
-          if (isValidPassword) {
-            user = headerUser[0];
-            console.log('✅ Auth middleware passed - Production header credentials verified');
-          }
-        }
-      }
-    }
-
-    // If header auth failed or in development, try session-based authentication
-    if (!user) {
-      if (req.session && req.session.userId) {
-        console.log('🔍 Auth middleware - Session check:', { 
-          userId: req.session.userId,
-          email: req.session.email,
-          sessionId: req.sessionID,
-          sessionKeys: Object.keys(req.session)
-        });
-
-        const sessionUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
-        if (sessionUser.length > 0) {
-          user = sessionUser[0];
-          console.log('✅ Auth middleware passed - Session verified');
+      const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
+      if (headerUser.length > 0) {
+        const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
+        if (isValidPassword) {
+          user = headerUser[0];
+          console.log('✅ Auth middleware passed - Header credentials verified');
         } else {
-          console.log('❌ Auth middleware - User not found in database for session userId:', req.session.userId);
+          console.log('❌ Auth middleware - Invalid password for user:', userEmail);
         }
       } else {
-        console.log('🔍 Auth middleware - No session found:', {
-          hasSession: !!req.session,
-          sessionId: req.sessionID,
-          sessionKeys: req.session ? Object.keys(req.session) : 'No session'
-        });
+        console.log('❌ Auth middleware - User not found:', userEmail);
       }
-
-      // If session auth failed, try header-based authentication as fallback
-      if (!user) {
-        const userEmail = req.headers['x-user-email'] as string;
-        const userPassword = req.headers['x-user-password'] as string;
-
-        if (userEmail && userPassword) {
-          console.log('🔍 Auth middleware - Fallback header check:', { 
-            userEmail: userEmail ? 'Provided' : 'Missing',
-            userPassword: userPassword ? 'Provided' : 'Missing'
-          });
-
-          const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
-          if (headerUser.length > 0) {
-            const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
-            if (isValidPassword) {
-              user = headerUser[0];
-              console.log('✅ Auth middleware passed - Fallback header credentials verified');
-            }
-          }
-        }
-      }
+    } else {
+      console.log('🔍 Auth middleware - Missing credentials in headers:', {
+        userEmail: !!userEmail,
+        userPassword: !!userPassword
+      });
     }
 
     // If no authentication method worked
@@ -111,31 +69,21 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-// Optional auth middleware - doesn't fail if no auth, but attaches user if available
+// Optional auth middleware - header-based only
 export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let user = null;
 
-    // Try session-based authentication
-    if (req.session && req.session.userId) {
-      const sessionUser = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
-      if (sessionUser.length > 0) {
-        user = sessionUser[0];
-      }
-    }
-
     // Try header-based authentication
-    if (!user) {
-      const userEmail = req.headers['x-user-email'] as string;
-      const userPassword = req.headers['x-user-password'] as string;
+    const userEmail = req.headers['x-user-email'] as string;
+    const userPassword = req.headers['x-user-password'] as string;
 
-      if (userEmail && userPassword) {
-        const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
-        if (headerUser.length > 0) {
-          const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
-          if (isValidPassword) {
-            user = headerUser[0];
-          }
+    if (userEmail && userPassword) {
+      const headerUser = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
+      if (headerUser.length > 0) {
+        const isValidPassword = await bcrypt.compare(userPassword, headerUser[0].password);
+        if (isValidPassword) {
+          user = headerUser[0];
         }
       }
     }

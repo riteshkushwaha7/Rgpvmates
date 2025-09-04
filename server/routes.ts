@@ -13,6 +13,7 @@ import { branchRoutes } from './branches.js';
 import { db } from './db.js';
 import { users } from './shared/schema.js';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from './middleware/auth.js';
 
 const router = Router();
 
@@ -113,13 +114,12 @@ router.use('/upload', uploadRoutes);
 router.use('/colleges', collegeRoutes);
 router.use('/branches', branchRoutes);
 
-// User session check
-router.get('/me', async (req, res) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
+// User authentication check - header-based
+router.get('/me', requireAuth, async (req, res) => {
   try {
+    // User is already authenticated by requireAuth middleware
+    const user = req.user;
+    
     // Get full user data from database
     const userResult = await db.select({
       id: users.id,
@@ -138,7 +138,7 @@ router.get('/me', async (req, res) => {
       likedUsers: users.likedUsers,
       dislikedUsers: users.dislikedUsers,
       blockedUsers: users.blockedUsers,
-    }).from(users).where(eq(users.id, req.session.userId)).limit(1);
+    }).from(users).where(eq(users.id, user.id)).limit(1);
 
     if (userResult.length === 0) {
       return res.status(404).json({ error: 'User not found' });
@@ -197,14 +197,9 @@ router.put('/me', async (req, res) => {
   }
 });
 
-// Logout
+// Logout - just return success since we're not using sessions
 router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Logout failed' });
-    }
-    res.json({ message: 'Logged out successfully' });
-  });
+  res.json({ message: 'Logged out successfully' });
 });
 
 export { router as routes };

@@ -108,13 +108,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // If not admin, try regular user session check
-      console.log('🔍 Auth - Checking user session');
+      // If not admin, try regular user authentication check
+      console.log('🔍 Auth - Checking user authentication');
       const userResponse = await fetch(`${API_URL}/api/me`, {
         method: 'GET',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...getUserHeaders()
         }
       });
 
@@ -143,7 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
