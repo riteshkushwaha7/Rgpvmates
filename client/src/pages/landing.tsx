@@ -65,7 +65,7 @@ const Landing = () => {
               to="/register"
               className="gradient-button text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              Get Started - ₹99
+              Get Started
             </Link>
             <Link 
               to="/safety"
