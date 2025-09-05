@@ -340,20 +340,20 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 flex flex-col">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-3">
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="flex items-center justify-between p-3">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/matches')}
-              className="p-2"
+              className="p-2 flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-100 to-orange-100">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-100 to-orange-100 flex-shrink-0">
                 {match.profileImageUrl ? (
                   <img
                     src={match.profileImageUrl}
@@ -367,30 +367,34 @@ const Chat = () => {
                 )}
               </div>
               
-              <div>
-                <h2 className="font-semibold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <h2 className="font-semibold text-gray-900 truncate">
                   {match.firstName} {match.lastName}
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 truncate">
                   {match.college} • {match.branch}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 hidden sm:inline">
               {isConnected ? 'Online' : 'Offline'}
             </span>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 pb-4 space-y-3">
         {messages.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No messages yet. Start the conversation!</p>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Send className="w-8 h-8 text-pink-500" />
+            </div>
+            <p className="text-gray-500 text-lg font-medium">No messages yet</p>
+            <p className="text-gray-400 text-sm mt-1">Start the conversation!</p>
           </div>
         ) : (
           messages.map((message) => {
@@ -399,24 +403,24 @@ const Chat = () => {
             return (
               <div
                 key={message.id}
-                className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} px-2`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                  className={`max-w-[75%] px-4 py-3 rounded-2xl ${
                     isOwnMessage
-                      ? 'bg-gradient-to-r from-pink-500 to-red-500 text-white'
-                      : 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                      ? 'bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-br-md'
+                      : 'bg-white text-gray-900 shadow-sm border border-gray-200 rounded-bl-md'
                   } ${message.id.startsWith('temp-') ? 'opacity-70' : ''}`}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <div className="flex items-center justify-between mt-1">
+                  <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                  <div className="flex items-center justify-between mt-2">
                     <p className={`text-xs ${
                       isOwnMessage ? 'text-pink-100' : 'text-gray-500'
                     }`}>
                       {formatTime(message.createdAt)}
                     </p>
                     {message.id.startsWith('temp-') && (
-                      <div className="w-2 h-2 bg-pink-200 rounded-full animate-pulse" />
+                      <div className="w-2 h-2 bg-pink-200 rounded-full animate-pulse ml-2" />
                     )}
                   </div>
                 </div>
@@ -427,27 +431,41 @@ const Chat = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex items-center space-x-3">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
-            className="flex-1"
-            disabled={!isConnected}
-          />
+      <div className="bg-white border-t border-gray-200 p-3 pb-6">
+        <div className="flex items-end space-x-3">
+          <div className="flex-1">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type a message..."
+              className="w-full min-h-[44px] px-4 py-3 text-base rounded-full border-2 border-gray-200 focus:border-pink-500 focus:ring-0 resize-none"
+              disabled={!isConnected}
+              style={{ 
+                fontSize: '16px', // Prevents zoom on iOS
+                lineHeight: '1.4'
+              }}
+            />
+          </div>
           <Button
             onClick={sendMessage}
             disabled={!newMessage.trim() || !isConnected || sendingMessage}
-            className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white"
+            className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white rounded-full w-11 h-11 p-0 flex-shrink-0 shadow-lg"
           >
             {sendingMessage ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             )}
           </Button>
+        </div>
+        
+        {/* Connection Status */}
+        <div className="flex items-center justify-center mt-2">
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} mr-2`}></div>
+          <span className="text-xs text-gray-500">
+            {isConnected ? 'Connected' : 'Connecting...'}
+          </span>
         </div>
       </div>
       
