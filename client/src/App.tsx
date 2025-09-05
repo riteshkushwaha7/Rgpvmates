@@ -9,9 +9,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Discover from './pages/Discover';
-import Matches from './pages/matches';
-import Messages from './pages/messages';
-import Chat from './pages/chat';
+import Matches from './pages/Matches';
+import Messages from './pages/Messages';
+import Chat from './pages/Chat';
 import Profile from './pages/profile';
 import ProfileEdit from './pages/profile-edit';
 import Settings from './pages/settings';
@@ -93,7 +93,7 @@ function App() {
             } />
             <Route path="/matches" element={
               <ProtectedRoute>
-                <Matches onChatOpen={(matchId) => window.location.href = `/chat/${matchId}`} />
+                <Matches />
               </ProtectedRoute>
             } />
             <Route path="/messages" element={
@@ -103,7 +103,7 @@ function App() {
             } />
             <Route path="/chat/:matchId" element={
               <ProtectedRoute>
-                <Chat matchId={window.location.pathname.split('/').pop() || ''} onBack={() => window.location.href = '/matches'} />
+                <Chat />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

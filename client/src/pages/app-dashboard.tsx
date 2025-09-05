@@ -5,8 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Swipe from "./swipe";
-import Matches from "./matches";
-import Chat from "./chat";
+import Matches from "./Matches";
+import Chat from "./Chat";
 import Profile from "./profile";
 import Settings from "./settings";
 
@@ -14,7 +14,6 @@ type AppSection = "swipe" | "matches" | "chat" | "profile" | "settings";
 
 export default function AppDashboard() {
   const [currentSection, setCurrentSection] = useState<AppSection>("swipe");
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const { isAuthenticated, isLoading } = useAuth();
 
   const { toast } = useToast();
@@ -33,24 +32,15 @@ export default function AppDashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const handleChatOpen = (matchId: string) => {
-    setSelectedMatchId(matchId);
-    setCurrentSection("chat");
-  };
-
-  const handleBackToMatches = () => {
-    setCurrentSection("matches");
-    setSelectedMatchId(null);
-  };
 
   const renderCurrentSection = () => {
     switch (currentSection) {
       case "swipe":
         return <Swipe />;
       case "matches":
-        return <Matches onChatOpen={handleChatOpen} />;
+        return <Matches />;
       case "chat":
-        return <Chat matchId={selectedMatchId} onBack={handleBackToMatches} />;
+        return <Chat />;
       case "profile":
         return <Profile />;
       case "settings":

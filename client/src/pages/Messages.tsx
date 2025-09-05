@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { config } from '../lib/config';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -25,7 +26,7 @@ interface Match {
 
 const Messages = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getAuthHeaders, hasValidCredentials } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,21 +36,52 @@ const Messages = () => {
 
   const fetchMatches = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_URL}/api/matching/matches`, {
-        credentials: 'include',
+      setLoading(true);
+      
+      if (!hasValidCredentials()) {
+        console.error('🔍 Messages - No valid credentials found');
+        toast.error('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('🔍 Messages - Fetching matches from:', `${config.API_URL}/api/matching/matches`);
+      
+      const headers = getAuthHeaders();
+      console.log('🔍 Messages - Sending JWT headers:', headers);
+      
+      if (!headers['Authorization']) {
+        console.error('🔍 Messages - No JWT token available');
+        toast.error('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      const response = await fetch(`${config.API_URL}/api/matching/matches`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers
+        }
       });
+
+      console.log('🔍 Messages - Response status:', response.status);
 
       if (response.ok) {
         const matchesData = await response.json();
+        console.log('🔍 Messages - Matches data received:', matchesData);
         
         // Fetch additional data for each match
         const matchesWithDetails = await Promise.all(
           matchesData.map(async (match: Match) => {
             try {
               // Get last message and unread count
-              const messagesResponse = await fetch(`${API_URL}/api/messages/match/${match.id}`, {
-                credentials: 'include',
+              const messagesResponse = await fetch(`${config.API_URL}/api/messages/match/${match.id}`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...headers
+                }
               });
               
               if (messagesResponse.ok) {
@@ -85,10 +117,17 @@ const Messages = () => {
         
         setMatches(matchesWithDetails);
       } else {
-        toast.error('Failed to load matches');
+        const errorData = await response.text();
+        console.error('🔍 Messages - Error response:', errorData);
+        
+        if (response.status === 401) {
+          toast.error('Authentication failed. Please refresh the page or try logging in again.');
+        } else {
+          toast.error('Failed to load matches');
+        }
       }
     } catch (error) {
-      console.error('Error fetching matches:', error);
+      console.error('🔍 Messages - Fetch error:', error);
       toast.error('Failed to load matches');
     } finally {
       setLoading(false);
@@ -122,11 +161,36 @@ const Messages = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="spinner w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading messages...</p>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="p-2"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
+                <p className="text-sm text-gray-600">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Loading State */}
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="spinner w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading messages...</p>
+          </div>
         </div>
+        
+        <BottomNavigation />
       </div>
     );
   }
