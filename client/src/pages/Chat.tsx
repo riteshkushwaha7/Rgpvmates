@@ -6,7 +6,6 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ArrowLeft, Send, User } from 'lucide-react';
 import toast from 'react-hot-toast';
-import BottomNavigation from '../components/BottomNavigation';
 
 interface Message {
   id: string;
@@ -297,8 +296,6 @@ const Chat = () => {
             <p className="text-gray-600">Loading chat...</p>
           </div>
         </div>
-        
-        <BottomNavigation />
       </div>
     );
   }
@@ -332,8 +329,6 @@ const Chat = () => {
             </Button>
           </div>
         </div>
-        
-        <BottomNavigation />
       </div>
     );
   }
@@ -468,8 +463,6 @@ const Chat = () => {
           </span>
         </div>
       </div>
-      
-      <BottomNavigation />
     </div>
   );
 };
