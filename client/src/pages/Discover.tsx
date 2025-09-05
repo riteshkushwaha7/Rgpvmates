@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { config } from '../lib/config';
 
-import { Heart, X, ArrowLeft, User, Bell, RefreshCw } from 'lucide-react';
+import { Heart, X, ArrowLeft, User, Bell, RefreshCw, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BottomNavigation from '../components/BottomNavigation';
 
@@ -160,7 +160,7 @@ const Discover = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getUserHeaders()
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           swipedId: profile.userId,
