@@ -64,9 +64,10 @@ export default function Register() {
   });
 
   const [files, setFiles] = useState({
-    profilePicture: null as File | null,
-    idCardFront: null as File | null,
-    idCardBack: null as File | null
+    profilePicture: null as File | null
+    // ID card uploads currently disabled
+    // idCardFront: null as File | null,
+    // idCardBack: null as File | null
   });
 
   const [loading, setLoading] = useState(false);
@@ -123,20 +124,20 @@ export default function Register() {
       return;
     }
 
-    if (!files.profilePicture || !files.idCardFront || !files.idCardBack) {
-      toast.error('Please upload all required images');
+    if (!files.profilePicture) {
+      toast.error('Please upload your profile picture');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Upload images to server
-      const [profileImageUrl, idCardFrontUrl, idCardBackUrl] = await Promise.all([
-        uploadToServer(files.profilePicture),
-        uploadToServer(files.idCardFront),
-        uploadToServer(files.idCardBack)
-      ]);
+      // Upload profile image to server
+      const profileImageUrl = await uploadToServer(files.profilePicture);
+      
+      // Use profile image as dummy ID card images (ID requirement currently paused)
+      const idCardFrontUrl = profileImageUrl;
+      const idCardBackUrl = profileImageUrl;
 
       // Register user with all data
       await register({
@@ -319,11 +320,11 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Image Uploads */}
+              {/* Profile Picture Upload */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Camera className="w-5 h-5" />
-                  Required Images
+                  Profile Picture
                 </h3>
                 
                 <div>
@@ -337,6 +338,7 @@ export default function Register() {
                   />
                 </div>
 
+                {/* ID Card uploads currently disabled
                 <div>
                   <Label htmlFor="idCardFront">ID Card Front *</Label>
                   <Input
@@ -358,13 +360,20 @@ export default function Register() {
                     required
                   />
                 </div>
+                */}
               </div>
 
-              {/* Terms and Premium Notice */}
+              {/* Terms and Notices */}
               <div className="space-y-4">
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <strong>Note:</strong> Currently ₹99 premium requirement is waived off.
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-yellow-50 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    <strong>ID Card Requirement:</strong> Currently paused. Your profile picture will be used for verification purposes.
                   </p>
                 </div>
 
