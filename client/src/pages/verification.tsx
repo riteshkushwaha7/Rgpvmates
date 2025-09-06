@@ -28,10 +28,10 @@ export default function Verification() {
 
   const handleSubmitVerification = () => {
     toast({
-      title: "Verification Submitted",
-      description: "Your ID has been submitted for verification. You'll be notified once approved.",
+      title: "Profile Submitted",
+      description: "Your profile has been submitted for admin verification. Check back within 24 hours.",
     });
-    setLocation("/payment");
+    setLocation("/registration-steps");
   };
 
   if (isLoading) {
@@ -45,22 +45,22 @@ export default function Verification() {
           <CardHeader className="text-center">
             <div className="text-4xl mb-4">🆔</div>
             <CardTitle className="text-2xl font-bold text-gray-900">Student ID Verification</CardTitle>
-            <p className="text-gray-600 mt-2">Upload your RGPV student ID for verification</p>
+            <p className="text-gray-600 mt-2">ID Card requirement is currently paused</p>
           </CardHeader>
           
           <CardContent className="p-8 space-y-6">
-            <Alert className="bg-blue-50 border border-blue-200">
-              <Info className="h-4 w-4 text-blue-500" />
-              <AlertDescription className="text-blue-900">
-                <h4 className="font-medium mb-2">Verification Requirements</h4>
-                <ul className="text-sm space-y-1">
-                  <li>• Clear photo of your RGPV student ID</li>
-                  <li>• ID should be readable and not expired</li>
-                  <li>• Verification typically takes 24-48 hours</li>
-                </ul>
+            <Alert className="bg-yellow-50 border border-yellow-200">
+              <Info className="h-4 w-4 text-yellow-500" />
+              <AlertDescription className="text-yellow-900">
+                <h4 className="font-medium mb-2">ID Card Requirement Paused</h4>
+                <p className="text-sm">
+                  Currently, ID card verification is not required. You can proceed directly to payment.
+                  This feature will be re-enabled in the future for enhanced security.
+                </p>
               </AlertDescription>
             </Alert>
             
+            {/* ID Card Upload - Currently Disabled
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Student ID Card</label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-rgpv-pink transition-colors cursor-pointer">
@@ -75,18 +75,19 @@ export default function Verification() {
                 />
               </div>
             </div>
+            */}
             
             <Button 
               onClick={handleSubmitVerification}
               className="w-full bg-rgpv-pink text-white py-3 rounded-lg font-semibold hover:bg-rgpv-dark transition-colors"
               data-testid="button-submit-verification"
             >
-              Submit for Verification
+              Submit Profile
             </Button>
             
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                After verification approval, you'll proceed to payment
+                Admin will verify your profile within 24 hours
               </p>
             </div>
           </CardContent>

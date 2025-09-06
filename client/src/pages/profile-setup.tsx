@@ -263,7 +263,7 @@ export default function ProfileSetup() {
                   className="w-full bg-rgpv-pink text-white py-3 rounded-lg font-semibold hover:bg-rgpv-dark transition-colors"
                   data-testid="button-continue-verification"
                 >
-                  {createProfileMutation.isPending ? "Creating Profile..." : "Continue to Verification"}
+                  {createProfileMutation.isPending ? "Creating Profile..." : "Continue to Payment"}
                 </Button>
               </form>
             </Form>

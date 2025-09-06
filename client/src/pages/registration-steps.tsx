@@ -20,38 +20,26 @@ export default function RegistrationSteps() {
           <CardContent className="space-y-6">
             {/* Registration Steps */}
             <div className="space-y-4">
-              {/* Step 1: Registration & ID Submission */}
+              {/* Step 1: Registration & Profile Setup */}
               <div className="flex items-start space-x-4 p-4 bg-green-50 rounded-lg border border-green-200">
                 <CheckCircle className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-green-800">1. Registration & ID Submission</h3>
+                  <h3 className="font-semibold text-green-800">1. Registration & Profile Setup</h3>
                   <p className="text-green-700 text-sm">✅ Completed</p>
                   <p className="text-green-600 text-sm mt-1">
-                    Your profile and ID cards have been successfully submitted.
+                    Your profile and data have been successfully submitted.
                   </p>
                 </div>
               </div>
 
-              {/* Step 2: ID Approval */}
+              {/* Step 2: Admin Verification */}
               <div className="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                 <Clock className="w-6 h-6 text-yellow-600 mt-1 flex-shrink-0" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-800">2. ID Approval</h3>
+                  <h3 className="font-semibold text-yellow-800">2. Admin Verification</h3>
                   <p className="text-yellow-700 text-sm">⏳ Pending</p>
                   <p className="text-yellow-600 text-sm mt-1">
-                    Our admin team is reviewing your ID cards for verification.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 3: Premium Payment */}
-              <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <CheckCircle className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-blue-800">3. Premium Payment (₹99)</h3>
-                  <p className="text-blue-700 text-sm">✅ Currently Bypassed</p>
-                  <p className="text-blue-600 text-sm mt-1">
-                    Premium requirement is currently waived off for all users.
+                    Our admin team is reviewing your profile. Check back within 24 hours.
                   </p>
                 </div>
               </div>
@@ -63,15 +51,15 @@ export default function RegistrationSteps() {
               <div className="space-y-2 text-sm text-gray-700">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>Immediate: Registration submitted successfully</span>
+                  <span>Immediate: Profile submitted successfully</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span>24-48 hours: ID verification by admin team</span>
+                  <span>Within 24 hours: Admin verification</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>After approval: You can start using the app</span>
+                  <span>After approval: You can login and start using the app</span>
                 </div>
               </div>
             </div>
@@ -83,15 +71,15 @@ export default function RegistrationSteps() {
                 <Info className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-gray-800 font-medium">
-                    Check back in 24-48 hours by logging in, approval may take time.
+                    Check back within 24 hours by logging in - admin verification may take time.
                   </p>
                   <p className="text-gray-600 text-sm mt-1">
-                    You'll receive an email notification once your account is approved.
+                    You'll be able to login and use the app once your profile is approved by admin.
                   </p>
                 </div>
               </div>
 
-              {/* ID discrepancy warning */}
+              {/* ID discrepancy warning - Currently Disabled
               <div className="flex items-start space-x-3 p-4 bg-orange-50 rounded-lg border border-orange-200">
                 <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
@@ -103,8 +91,9 @@ export default function RegistrationSteps() {
                   </p>
                 </div>
               </div>
+              */}
 
-              {/* What if rejected */}
+              {/* What if rejected - Currently Disabled
               <div className="flex items-start space-x-3 p-4 bg-red-50 rounded-lg border border-red-200">
                 <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                 <div>
@@ -118,6 +107,7 @@ export default function RegistrationSteps() {
                   </p>
                 </div>
               </div>
+              */}
             </div>
 
             {/* Action Buttons */}
