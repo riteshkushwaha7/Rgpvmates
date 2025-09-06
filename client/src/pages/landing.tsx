@@ -68,6 +68,12 @@ const Landing = () => {
               Get Started
             </Link>
             <Link 
+              to="/login"
+              className="border-2 border-pink-500 text-pink-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-pink-50 transition-all duration-300"
+            >
+              Login
+            </Link>
+            <Link 
               to="/safety"
               className="border-2 border-pink-500 text-pink-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-pink-50 transition-all duration-300"
             >
