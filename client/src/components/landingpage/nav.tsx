@@ -48,6 +48,7 @@ const Navbar = () => {
         <div className='flex gap-4'>
             
             <button
+            onClick={() => navigate(`/login`)}
                 className='bg-transparent text-black/80 hover:text-black font-medium h-9 flex items-center justify-center text-sm font-grotesk'
             >Login</button>
             <button

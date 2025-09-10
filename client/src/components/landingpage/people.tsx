@@ -295,7 +295,7 @@ const PeopleCanvas = () => {
         
             <div className="font-medium tracking-tight">@2025 RGPVMATES </div>
             <div className="flex gap-2 ">
-                <div onClick={() => window.location.href = "https://example.com"} className="flex cursor-pointer items-center justify-center"><ArrowUpRight/>LINKEDIN</div>
+                <div onClick={() => window.location.href = "https://www.linkedin.com/posts/riteshkushwaha7_rgpvmates-collegelife-datingapp-activity-7369696307743064070-ufLu"} className="flex cursor-pointer items-center justify-center"><ArrowUpRight/>LINKEDIN</div>
                 <div onClick={()=>navigate('/safety')} className="flex items-center cursor-pointer justify-center"><ArrowUpRight/>GUIDELINES</div>
                 <div onClick={()=>navigate('/terms')} className="flex items-center cursor-pointer justify-center"><ArrowUpRight/>T&C</div>
             </div>
