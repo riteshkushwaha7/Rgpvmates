@@ -303,7 +303,7 @@ const PeopleCanvas = () => {
 
       </div>
       <div className="absolute bottom-0  w-screen  z-0 pointer-events-none">
-        <CrowdCanvas src="/shared/open-peeps-sheet.png" rows={15} cols={7} />
+        <CrowdCanvas src="/open-peeps-sheet.png" rows={15} cols={7} />
       </div>
     </div>
   );
