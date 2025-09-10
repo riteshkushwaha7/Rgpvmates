@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Pages
-import Landing from './pages/landing';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -17,12 +17,15 @@ import ProfileEdit from './pages/profile-edit';
 import Settings from './pages/settings';
 import Admin from './pages/admin';
 import Contact from './pages/contact';
-import SafetyGuidelines from './pages/safety-guidelines';
+
 import Payment from './pages/payment';
 import TermsConditions from './pages/terms-conditions';
 import RegistrationSteps from './pages/registration-steps';
 import AdminLogin from './pages/admin-login';
 import NotFound from './pages/not-found';
+import Heropage from './pages/Heropage';
+
+import GuideLines from './pages/safety-guidelines';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requireAuth = true, requireAdmin = false }: {
@@ -68,14 +71,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-orange-50">
+        <div className="min-h-screen ">
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Heropage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/safety" element={<SafetyGuidelines />} />
+            <Route path="/safety" element={<GuideLines />} />
             <Route path="/terms" element={<TermsConditions />} />
             <Route path="/registration-steps" element={<RegistrationSteps />} />
             <Route path="/admin-login" element={<AdminLogin />} />

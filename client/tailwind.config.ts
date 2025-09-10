@@ -18,6 +18,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        grotesk: ["var(--grotesk)"],
+        pacifo: ["var(--pacifo)"]
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -137,5 +141,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate") , require('tailwind-scrollbar-hide'),],
 } satisfies Config;
