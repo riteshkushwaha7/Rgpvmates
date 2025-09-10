@@ -1,8 +1,8 @@
 "use client";
 
 import { gsap } from "gsap";
-import React, { useEffect, useRef } from "react";
-import Title from "./title";
+import { useEffect, useRef } from "react";
+
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -69,7 +69,7 @@ const CrowdCanvas = ({ src, rows = 15, cols = 7 }: CrowdCanvasProps) => {
     };
 
     const normalWalk = ({ peep, props }: { peep: any; props: any }) => {
-      const { startX, startY, endX } = props;
+      const {  startY, endX } = props;
       const xDuration = 10;
       const yDuration = 0.25;
 

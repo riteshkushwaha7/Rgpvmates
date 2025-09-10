@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { PeopleCanvas } from './people'
 import { useNavigate } from 'react-router-dom'
 
