@@ -84,9 +84,9 @@ const SectionWrapper = () => {
 
           <div className="p-2 border border-neutral-200 rounded-2xl">
             <div className=" max-w-fit mx-auto py-4 px-4 w-full rounded-2xl flex flex-col md:flex-row gap-4 ">
-              <ShowCard path={"/shared/secure.json"} title="Verified Students" description="All profiles are verified with student IDs to ensure authenticity and safety." tag="verification" />
-              <ShowCard path={"/shared/match.json"} title="Smart Matching" description="Advanced algorithms finds  matches based on your preferences." tag="connection" />
-              <ShowCard path={"/shared/message.json"} title="Safe Messaging" description="Built-in chat system with safety features to help you connect securely." tag="messages" />
+              <ShowCard path={"/secure.json"} title="Verified Students" description="All profiles are verified with student IDs to ensure authenticity and safety." tag="verification" />
+              <ShowCard path={"/match.json"} title="Smart Matching" description="Advanced algorithms finds  matches based on your preferences." tag="connection" />
+              <ShowCard path={"/message.json"} title="Safe Messaging" description="Built-in chat system with safety features to help you connect securely." tag="messages" />
             </div>
           </div>
         </motion.div>

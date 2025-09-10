@@ -13,7 +13,7 @@ const LandingHero = () => {
         <Navbar/>
     {/* Left hand */}
     <motion.img
-      src="/shared/leftbg.png"
+      src="/leftbg.png"
       alt="Left Hand"
       className="absolute bottom-64 md:bottom-80 left-0 w-[30vw] md:w-[50vh] z-10"
       animate={{ y: [0, -10, 0] }}
@@ -22,7 +22,7 @@ const LandingHero = () => {
 
     {/* Right hand */}
     <motion.img
-      src="/shared/rightbg.png"
+      src="/rightbg.png"
       alt="Right Hand"
       className="absolute bottom-56 right-0 w-[30vw] md:w-[50vh] z-10"
       animate={{ y: [0, 20, 0] }}
