@@ -2,7 +2,6 @@
 import ShowCard from "./showcasecard";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { Accordion } from "../ui/accordion";
 import AccordionDemo from "./accourdian";
 
 function useIsLargeScreen() {

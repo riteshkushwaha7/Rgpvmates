@@ -2,7 +2,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import Title from './title'
 
-import { Ellipsis, Rows2, WavesIcon } from 'lucide-react'
+import {   WavesIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
