@@ -1,6 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&family=Pacifico&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 @layer base {
   :root {
@@ -24,6 +26,8 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 346.8 77.2% 49.8%;
     --radius: 0.5rem;
+    --grotesk:"Host Grotesk", sans-serif;
+    --pacifo:"Pacifico", cursive;
   }
 
   .dark {
@@ -61,7 +65,7 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
 }
 
 ::-webkit-scrollbar-track {
@@ -273,4 +277,17 @@
 
 .swipe-left {
   animation: swipeLeft 0.5s ease-out forwards;
+}
+
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari, Opera */
+    width: 0;
+    height: 0;
+  }
 }
