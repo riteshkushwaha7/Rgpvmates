@@ -1,6 +1,8 @@
 # Node
 node_modules/
 npm-debug.log*
+.next/
+out/
 
 # Build
 dist/
@@ -10,6 +12,8 @@ client/dist/
 
 # Env files
 .env
+.env.local
+.env.*.local
 client/.env
 server/.env
 
